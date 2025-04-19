@@ -14,6 +14,7 @@ CREATE TABLE users (
     pfp VARCHAR(255) NULL,
     email VARCHAR(255) NULL,
     is_admin BOOLEAN NULL DEFAULT FALSE,
+    remember_token VARCHAR(100) NULL, -- Añadido para soporte de "remember me"
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
