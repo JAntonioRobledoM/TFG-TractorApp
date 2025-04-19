@@ -122,6 +122,30 @@ CREATE TABLE conversation_user (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- 10. Tabla sessions (para Laravel)
+CREATE TABLE sessions (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id BIGINT NULL,
+    ip_address VARCHAR(45) NULL,
+    user_agent TEXT NULL,
+    payload TEXT NULL,
+    last_activity INT NOT NULL
+);
+
+-- 11. Tabla cache (para Laravel)
+CREATE TABLE `cache` (
+    `key` VARCHAR(255) PRIMARY KEY,
+    `value` MEDIUMTEXT NOT NULL,
+    `expiration` INT NOT NULL
+);
+
+-- 12. Tabla cache_locks (para Laravel)
+CREATE TABLE `cache_locks` (
+    `key` VARCHAR(255) PRIMARY KEY,
+    `owner` VARCHAR(255) NOT NULL,
+    `expiration` INT NOT NULL
+);
+
 -- Índices adicionales para mejorar el rendimiento
 CREATE INDEX idx_listings_seller ON listings(seller_id);
 CREATE INDEX idx_listings_tractor ON listings(tractor_id);
@@ -131,3 +155,5 @@ CREATE INDEX idx_notification_user ON notifications(user_id);
 CREATE INDEX idx_messages_sender ON messages(sender_id);
 CREATE INDEX idx_messages_receiver ON messages(receiver_id);
 CREATE INDEX idx_conversation_user ON conversation_user(conversation_id, user_id);
+CREATE INDEX idx_sessions_user ON sessions(user_id);
+CREATE INDEX idx_cache_expiration ON `cache`(expiration);
