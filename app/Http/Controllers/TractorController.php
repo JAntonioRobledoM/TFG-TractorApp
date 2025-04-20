@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Tractor;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\User;
 
 class TractorController extends Controller
 {
@@ -23,27 +24,36 @@ class TractorController extends Controller
      * Show the form for creating a new resource.
      */
     public function create()
-    {
-        return Inertia::render('Tractors/Create');
-    }
+{
+    $availableUsers = User::all();
+    return Inertia::render('Tractors/Create', [
+        'availableUsers' => $availableUsers
+    ]);
+}
 
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'field_2' => ['nullable', 'numeric'],
-            'model' => ['nullable', 'string', 'max:255'],
-            'year' => ['nullable', 'integer'],
-            'description' => ['nullable', 'string'],
-        ]);
+{
+    $validated = $request->validate([
+        'model' => ['nullable', 'string', 'max:255'],
+        'year' => ['nullable', 'integer'],
+        'description' => ['nullable', 'string'],
+        'field_2' => ['nullable', 'numeric'],
+        'users' => ['nullable', 'array']
+    ]);
 
-        $tractor = Tractor::create($validated);
+    $tractor = Tractor::create($validated);
 
-        return redirect()->route('tractors.index')
-            ->with('message', 'Tractor creado correctamente.');
+    // Asignar usuarios si se proporcionan
+    if (!empty($validated['users'])) {
+        $tractor->users()->sync($validated['users']);
     }
+
+    return redirect()->route('tractors.index')
+        ->with('message', 'Tractor creado correctamente.');
+}
 
     /**
      * Display the specified resource.
@@ -61,29 +71,38 @@ class TractorController extends Controller
      * Show the form for editing the specified resource.
      */
     public function edit(Tractor $tractor)
-    {
-        return Inertia::render('Tractors/Edit', [
-            'tractor' => $tractor
-        ]);
-    }
+{
+    $availableUsers = User::all();
+    $tractor->load('users');
+    return Inertia::render('Tractors/Edit', [
+        'tractor' => $tractor,
+        'availableUsers' => $availableUsers
+    ]);
+}
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Tractor $tractor)
-    {
-        $validated = $request->validate([
-            'field_2' => ['nullable', 'numeric'],
-            'model' => ['nullable', 'string', 'max:255'],
-            'year' => ['nullable', 'integer'],
-            'description' => ['nullable', 'string'],
-        ]);
+{
+    $validated = $request->validate([
+        'model' => ['nullable', 'string', 'max:255'],
+        'year' => ['nullable', 'integer'],
+        'description' => ['nullable', 'string'],
+        'field_2' => ['nullable', 'numeric'],
+        'users' => ['nullable', 'array']
+    ]);
 
-        $tractor->update($validated);
+    $tractor->update($validated);
 
-        return redirect()->route('tractors.index')
-            ->with('message', 'Tractor actualizado correctamente.');
+    // Sincronizar usuarios
+    if (isset($validated['users'])) {
+        $tractor->users()->sync($validated['users']);
     }
+
+    return redirect()->route('tractors.index')
+        ->with('message', 'Tractor actualizado correctamente.');
+}
 
     /**
      * Remove the specified resource from storage.
