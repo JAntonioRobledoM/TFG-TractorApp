@@ -86,6 +86,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('conversations/{conversation}/leave', [ConversationController::class, 'leave'])->name('conversations.leave');
     Route::post('conversations/{conversation}/add-users', [ConversationController::class, 'addUsers'])->name('conversations.add-users');
     Route::delete('conversations/{conversation}/users/{user}', [ConversationController::class, 'removeUser'])->name('conversations.remove-user');
+
+    // Rutas para gestión de tractores de usuarios
+    Route::get('users/{user}/assign-tractors', [UserController::class, 'assignTractors'])
+    ->name('users.assign-tractors');
+    Route::post('users/{user}/add-tractor', [UserController::class, 'addTractor'])
+        ->name('users.add-tractor');
+    Route::delete('users/{user}/remove-tractor/{tractor}', [UserController::class, 'removeTractor'])
+        ->name('users.remove-tractor');
 });
 
 require __DIR__.'/settings.php';

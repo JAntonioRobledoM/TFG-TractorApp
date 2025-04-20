@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Tractor;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
@@ -59,13 +60,55 @@ class UserController extends Controller
      * Display the specified resource.
      */
     public function show(User $user)
+{
+    $user->load(['tractors', 'listings', 'requests']);
+    
+    return Inertia::render('Users/Show', [
+        'user' => $user,
+        'availableTractors' => Tractor::whereNotIn('id', $user->tractors->pluck('id'))->get()
+    ]);
+}
+
+    public function addTractor(Request $request, User $user)
     {
-        $user->load(['tractors', 'listings', 'requests']);
-        
-        return Inertia::render('Users/Show', [
-            'user' => $user
+        $validated = $request->validate([
+            'tractor_id' => ['required', 'exists:tractors,id']
         ]);
+
+        // Verificar si el tractor ya está asignado
+        if (!$user->tractors()->where('tractor_id', $validated['tractor_id'])->exists()) {
+            $user->tractors()->attach($validated['tractor_id']);
+
+            return redirect()->back()->with('message', 'Tractor añadido al usuario correctamente');
+        }
+
+        return redirect()->back()->with('error', 'El tractor ya está asignado a este usuario');
     }
+
+    /**
+     * Remove a tractor from a user.
+     */
+    public function removeTractor(User $user, Tractor $tractor)
+    {
+        $user->tractors()->detach($tractor->id);
+
+        return redirect()->back()->with('message', 'Tractor eliminado del usuario');
+    }
+
+    /**
+     * Show the form for assigning tractors to a user.
+     */
+    public function assignTractors(User $user)
+{
+    $assignedTractors = $user->tractors;
+    $availableTractors = Tractor::whereNotIn('id', $assignedTractors->pluck('id'))->get();
+
+    return Inertia::render('Users/AssignTractors', [
+        'user' => $user,
+        'assignedTractors' => $assignedTractors,
+        'availableTractors' => $availableTractors
+    ]);
+}
 
     /**
      * Show the form for editing the specified resource.
