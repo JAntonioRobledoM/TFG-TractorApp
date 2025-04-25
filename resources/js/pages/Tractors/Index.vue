@@ -1,5 +1,10 @@
 <template>
     <AdminLayout>
+      <template #header>
+          <h2 class="font-semibold text-2xl text-white leading-tight">
+            Tractores
+          </h2>
+        </template>
       <div class="container mx-auto p-6">
         <div class="flex justify-between items-center mb-6">
           <h1 class="text-2xl font-bold text-green-800">Tractores</h1>

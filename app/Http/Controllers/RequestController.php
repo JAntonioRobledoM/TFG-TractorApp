@@ -7,6 +7,7 @@ use App\Models\Listing;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 
 class RequestController extends Controller
 {
@@ -42,20 +43,24 @@ class RequestController extends Controller
      */
     public function store(Request $request)
     {
+        // Validamos solo los campos que realmente recibimos del formulario
         $validated = $request->validate([
             'listing_id' => ['required', 'exists:listings,id'],
-            'requester_id' => ['required', 'exists:users,id'],
             'type' => ['required', 'string', 'in:sale,rental'],
-            'status' => ['required', 'string', 'in:pending,accepted,rejected,completed'],
-            'offered_price' => ['nullable', 'numeric', 'min:0'],
+            'offered_price' => ['required', 'numeric', 'min:0'],
             'requested_start_date' => ['nullable', 'date', 'required_if:type,rental'],
             'requested_end_date' => ['nullable', 'date', 'required_if:type,rental', 'after_or_equal:requested_start_date'],
             'message' => ['nullable', 'string'],
         ]);
         
+        // Añadimos el ID del usuario autenticado y el estado inicial
+        $validated['requester_id'] = Auth::id();
+        $validated['status'] = 'pending';
+        
+        // Creamos la solicitud
         $tractorRequest = TractorRequest::create($validated);
 
-        // Create notification for the listing seller
+        // Creamos notificación para el vendedor
         $listing = Listing::findOrFail($validated['listing_id']);
         Notification::create([
             'user_id' => $listing->seller_id,

@@ -96,5 +96,15 @@ Route::middleware(['auth'])->group(function () {
         ->name('users.remove-tractor');
 });
 
+Route::middleware(['auth'])->group(function () {
+    // Rutas de solicitudes existentes
+    Route::resource('requests', RequestController::class);
+    
+    // Rutas adicionales para acciones específicas
+    Route::post('/requests/{request}/accept', [RequestController::class, 'accept'])->name('requests.accept');
+    Route::post('/requests/{request}/reject', [RequestController::class, 'reject'])->name('requests.reject');
+    Route::post('/requests/{request}/complete', [RequestController::class, 'complete'])->name('requests.complete');
+});
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
