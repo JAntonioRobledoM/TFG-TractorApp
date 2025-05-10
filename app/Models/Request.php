@@ -2,33 +2,42 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Request extends Model
 {
+    use HasFactory;
+
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $fillable = [
-        'listing_id', 'requester_id', 'type', 'status', 
-        'offered_price', 'requested_start_date', 'requested_end_date', 'message'
+        'listing_id',
+        'requester_id',
+        'type',
+        'status',
+        'offered_price',
+        'requested_start_date',
+        'requested_end_date',
+        'message',
     ];
 
     /**
      * The attributes that should be cast.
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $casts = [
+        'offered_price' => 'decimal:2',
         'requested_start_date' => 'date',
         'requested_end_date' => 'date',
-        'offered_price' => 'decimal:2',
     ];
 
     /**
-     * Get the listing associated with the request.
+     * Get the listing that this request is for.
      */
     public function listing()
     {
@@ -36,18 +45,10 @@ class Request extends Model
     }
 
     /**
-     * Get the requester who made the request.
+     * Get the user who made this request.
      */
     public function requester()
     {
         return $this->belongsTo(User::class, 'requester_id');
-    }
-
-    /**
-     * Get the notifications related to this request.
-     */
-    public function notifications()
-    {
-        return $this->morphMany(Notification::class, 'related');
     }
 }

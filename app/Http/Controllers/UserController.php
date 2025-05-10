@@ -1,5 +1,5 @@
 <?php
-
+// UserController.php - Modified to use password instead of pass to match Laravel conventions
 namespace App\Http\Controllers;
 
 use App\Models\User;
@@ -41,14 +41,15 @@ class UserController extends Controller
             'last_name' => ['required', 'string', 'max:255'],
             'dni' => ['nullable', 'string', 'max:20'],
             'tlf' => ['nullable', 'numeric'],
-            'pass' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string', 'min:8'], // Changed from 'pass' to 'password'
             'email' => ['nullable', 'string', 'email', 'max:255', 'unique:users'],
             'is_admin' => ['nullable', 'boolean'],
             'pfp' => ['nullable', 'string', 'max:255'],
         ]);
 
         // Hash password
-        $validated['pass'] = Hash::make($validated['pass']);
+        $validated['pass'] = Hash::make($validated['password']); // Store hashed password in 'pass' field
+        unset($validated['password']); // Remove 'password' from validated data
 
         $user = User::create($validated);
 
@@ -60,14 +61,14 @@ class UserController extends Controller
      * Display the specified resource.
      */
     public function show(User $user)
-{
-    $user->load(['tractors', 'listings', 'requests']);
-    
-    return Inertia::render('Users/Show', [
-        'user' => $user,
-        'availableTractors' => Tractor::whereNotIn('id', $user->tractors->pluck('id'))->get()
-    ]);
-}
+    {
+        $user->load(['tractors', 'listings', 'requests']);
+        
+        return Inertia::render('Users/Show', [
+            'user' => $user,
+            'availableTractors' => Tractor::whereNotIn('id', $user->tractors->pluck('id'))->get()
+        ]);
+    }
 
     public function addTractor(Request $request, User $user)
     {
@@ -99,16 +100,16 @@ class UserController extends Controller
      * Show the form for assigning tractors to a user.
      */
     public function assignTractors(User $user)
-{
-    $assignedTractors = $user->tractors;
-    $availableTractors = Tractor::whereNotIn('id', $assignedTractors->pluck('id'))->get();
+    {
+        $assignedTractors = $user->tractors;
+        $availableTractors = Tractor::whereNotIn('id', $assignedTractors->pluck('id'))->get();
 
-    return Inertia::render('Users/AssignTractors', [
-        'user' => $user,
-        'assignedTractors' => $assignedTractors,
-        'availableTractors' => $availableTractors
-    ]);
-}
+        return Inertia::render('Users/AssignTractors', [
+            'user' => $user,
+            'assignedTractors' => $assignedTractors,
+            'availableTractors' => $availableTractors
+        ]);
+    }
 
     /**
      * Show the form for editing the specified resource.
@@ -137,11 +138,11 @@ class UserController extends Controller
         ]);
 
         // Update password if provided
-        if ($request->filled('pass')) {
+        if ($request->filled('password')) { // Changed from 'pass' to 'password'
             $request->validate([
-                'pass' => ['string', 'min:8'],
+                'password' => ['string', 'min:8'], // Changed from 'pass' to 'password'
             ]);
-            $validated['pass'] = Hash::make($request->pass);
+            $validated['pass'] = Hash::make($request->password); // Store hashed password in 'pass' field
         }
 
         $user->update($validated);

@@ -2,34 +2,43 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Listing extends Model
 {
+    use HasFactory;
+
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $fillable = [
-        'tractor_id', 'seller_id', 'type', 'price', 
-        'description', 'is_active', 'start_date', 'end_date'
+        'tractor_id',
+        'seller_id',
+        'type',
+        'price',
+        'description',
+        'is_active',
+        'start_date',
+        'end_date',
     ];
 
     /**
      * The attributes that should be cast.
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $casts = [
+        'price' => 'decimal:2',
         'is_active' => 'boolean',
         'start_date' => 'date',
         'end_date' => 'date',
-        'price' => 'decimal:2',
     ];
 
     /**
-     * Get the tractor associated with the listing.
+     * Get the tractor that this listing is for.
      */
     public function tractor()
     {
@@ -37,7 +46,7 @@ class Listing extends Model
     }
 
     /**
-     * Get the seller of the listing.
+     * Get the seller of this listing.
      */
     public function seller()
     {

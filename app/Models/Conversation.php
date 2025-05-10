@@ -2,37 +2,35 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Conversation extends Model
 {
+    use HasFactory;
+
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $fillable = [
-        'title'
+        'title',
     ];
 
     /**
-     * Get the users that are part of the conversation.
+     * Get the users that are part of this conversation.
      */
     public function users()
     {
-        return $this->belongsToMany(User::class, 'conversation_user');
+        return $this->belongsToMany(User::class);
     }
 
     /**
      * Get the messages for this conversation.
-     * Note: This assumes you'll add a conversation_id to messages table
-     * or you'll need to filter messages based on users in this conversation.
      */
     public function messages()
     {
-        // If you add conversation_id to messages table:
-        // return $this->hasMany(Message::class);
-        
-        // Alternative implementation would require custom logic
+        return $this->morphMany(Message::class, 'related');
     }
 }

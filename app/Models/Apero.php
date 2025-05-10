@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Notification extends Model
+class Apero extends Model
 {
     use HasFactory;
 
@@ -15,12 +15,13 @@ class Notification extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'user_id',
-        'related_id',
-        'related_type',
+        'name',
         'type',
-        'message',
-        'is_read',
+        'description',
+        'brand',
+        'model',
+        'year',
+        'is_available',
     ];
 
     /**
@@ -29,22 +30,17 @@ class Notification extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'is_read' => 'boolean',
+        'year' => 'integer',
+        'is_available' => 'boolean',
     ];
 
     /**
-     * Get the user that this notification is for.
+     * Get the tractors that this apero is attached to.
      */
-    public function user()
+    public function tractors()
     {
-        return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Get the related model.
-     */
-    public function related()
-    {
-        return $this->morphTo();
+        return $this->belongsToMany(Tractor::class)
+            ->withTimestamps()
+            ->withPivot('attached_at', 'detached_at');
     }
 }
