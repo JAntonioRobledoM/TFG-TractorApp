@@ -15,7 +15,6 @@ class Tractor extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'field_2',
         'model',
         'year',
         'description',
@@ -37,7 +36,6 @@ class Tractor extends Model
         'horsepower' => 'integer',
         'working_hours' => 'decimal:2',
         'is_available' => 'boolean',
-        'field_2' => 'integer',
     ];
 
     /**

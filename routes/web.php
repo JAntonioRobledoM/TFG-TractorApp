@@ -9,10 +9,12 @@ use App\Http\Controllers\RequestController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ConversationController;
+use App\Http\Controllers\AperoController; // Añadido el controlador de Aperos
 use App\Models\User;
 use App\Models\Tractor;
 use App\Models\Listing;
 use App\Models\Request as RequestModel;
+use App\Models\Apero; // Añadido el modelo de Apero
 
 // Redirigir la raíz al dashboard si está autenticado, o a la página de inicio de sesión si no
 Route::get('/', function () {
@@ -25,11 +27,13 @@ Route::get('dashboard', function () {
         'stats' => [
             'users' => User::count(),
             'tractors' => Tractor::count(),
+            'aperos' => Apero::count(), // Añadido contador de aperos
             'activeListings' => Listing::where('is_active', true)->count(),
             'pendingRequests' => RequestModel::where('status', 'pending')->count(),
         ],
         'recentUsers' => User::latest()->take(5)->get(),
         'recentTractors' => Tractor::latest()->take(5)->get(),
+        'recentAperos' => Apero::latest()->take(5)->get(), // Añadidos aperos recientes
         'recentListings' => Listing::with('tractor')->latest()->take(5)->get(),
         'recentRequests' => RequestModel::with('requester')->latest()->take(5)->get(),
         'recentNotifications' => auth()->user()->notifications()->latest()->take(5)->get(),
@@ -47,6 +51,7 @@ Route::middleware(['auth'])->group(function () {
     // Rutas de recursos básicos
     Route::resource('users', UserController::class);
     Route::resource('tractors', TractorController::class);
+    Route::resource('aperos', AperoController::class); // Añadida ruta resource para aperos
     Route::resource('listings', ListingController::class);
     Route::resource('requests', RequestController::class);
     Route::resource('notifications', NotificationController::class)->only(['index', 'show', 'destroy']);
@@ -60,6 +65,17 @@ Route::middleware(['auth'])->group(function () {
     // Rutas adicionales para tractores
     Route::get('tractors/{tractor}/listings', [TractorController::class, 'listings'])->name('tractors.listings');
     Route::get('tractors/{tractor}/users', [TractorController::class, 'users'])->name('tractors.users');
+    
+    // Rutas adicionales para aperos
+    Route::get('aperos/{apero}/tractors', [AperoController::class, 'tractors'])->name('aperos.tractors');
+    Route::get('aperos/{apero}/attach-tractors', [AperoController::class, 'attachTractors'])->name('aperos.attach-tractors');
+    Route::post('aperos/{apero}/attach-tractor', [AperoController::class, 'attachTractor'])->name('aperos.attach-tractor');
+    Route::delete('aperos/{apero}/detach-tractor/{tractor}', [AperoController::class, 'detachTractor'])->name('aperos.detach-tractor');
+    
+    // Rutas adicionales para tractores relacionadas con aperos
+    Route::get('tractors/{tractor}/attach-aperos', [TractorController::class, 'attachAperos'])->name('tractors.attach-aperos');
+    Route::post('tractors/{tractor}/attach-apero', [TractorController::class, 'attachApero'])->name('tractors.attach-apero');
+    Route::delete('tractors/{tractor}/detach-apero/{apero}', [TractorController::class, 'detachApero'])->name('tractors.detach-apero');
     
     // Rutas adicionales para anuncios
     Route::get('listings/{listing}/requests', [ListingController::class, 'requests'])->name('listings.requests');

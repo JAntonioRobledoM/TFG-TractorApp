@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('tractors', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('field_2')->nullable(); // ¿posiblemente se puede renombrar luego?
             $table->string('model')->nullable();
             $table->integer('year')->nullable();
             $table->text('description')->nullable();

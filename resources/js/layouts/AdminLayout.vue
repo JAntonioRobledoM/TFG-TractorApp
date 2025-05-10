@@ -44,6 +44,16 @@
                                     <span>Tractores</span>
                                 </div>
                             </NavLink>
+                            <!-- Enlace para Aperos -->
+                            <NavLink :href="route('aperos.index')" :active="route().current('aperos.*')"
+                                class="text-green-100 hover:text-yellow-400 hover:bg-green-800 px-3 py-2 rounded-md transition duration-200">
+                                <div class="flex items-center space-x-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zm7-10a1 1 0 01.707.293l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L13.586 9H10a1 1 0 110-2h3.586l-2.293-2.293A1 1 0 0112 2z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span>Aperos</span>
+                                </div>
+                            </NavLink>
                             <NavLink :href="route('listings.index')" :active="route().current('listings.*')"
                                 class="text-green-100 hover:text-yellow-400 hover:bg-green-800 px-3 py-2 rounded-md transition duration-200">
                                 <div class="flex items-center space-x-2">
@@ -203,6 +213,12 @@
                                     Perfil
                                     </Link>
 
+                                    <!-- Links para Mis Tractores y Mis Aperos -->
+                                    <Link :href="route('users.tractors', $page.props.auth.user.id)"
+                                        class="block w-full px-4 py-2 text-left text-sm leading-5 text-gray-700 hover:bg-green-50 focus:outline-none focus:bg-green-50 transition duration-150 ease-in-out">
+                                    Mis Tractores
+                                    </Link>
+
                                     <form @submit.prevent="logout">
                                         <button type="submit"
                                             class="block w-full px-4 py-2 text-left text-sm leading-5 text-gray-700 hover:bg-green-50 focus:outline-none focus:bg-green-50 transition duration-150 ease-in-out">
@@ -248,6 +264,11 @@
                         class="text-green-100 hover:text-yellow-400 hover:bg-green-700">
                         Tractores
                     </ResponsiveNavLink>
+                    <!-- Enlace responsive para Aperos -->
+                    <ResponsiveNavLink :href="route('aperos.index')" :active="route().current('aperos.*')"
+                        class="text-green-100 hover:text-yellow-400 hover:bg-green-700">
+                        Aperos
+                    </ResponsiveNavLink>
                     <ResponsiveNavLink :href="route('listings.index')" :active="route().current('listings.*')"
                         class="text-green-100 hover:text-yellow-400 hover:bg-green-700">
                         Anuncios
@@ -270,6 +291,10 @@
                         <ResponsiveNavLink :href="route('users.edit', $page.props.auth.user.id)"
                             class="text-green-100 hover:text-yellow-400 hover:bg-green-700">
                             Perfil
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('users.tractors', $page.props.auth.user.id)"
+                            class="text-green-100 hover:text-yellow-400 hover:bg-green-700">
+                            Mis Tractores
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('notifications.index')"
                             class="text-green-100 hover:text-yellow-400 hover:bg-green-700">
@@ -362,17 +387,26 @@ const component = {
       axios.get(route('notifications.unread-count'))
         .then(response => {
           this.unreadNotificationsCount = response.data.count;
+        })
+        .catch(error => {
+          console.error('Error al obtener notificaciones no leídas:', error);
         });
       
       axios.get(route('notifications.recent'))
         .then(response => {
           this.notifications = response.data.notifications;
+        })
+        .catch(error => {
+          console.error('Error al obtener notificaciones recientes:', error);
         });
     },
     fetchMessages() {
       axios.get(route('messages.unread-count'))
         .then(response => {
           this.unreadMessagesCount = response.data.count;
+        })
+        .catch(error => {
+          console.error('Error al obtener mensajes no leídos:', error);
         });
     }
   },
