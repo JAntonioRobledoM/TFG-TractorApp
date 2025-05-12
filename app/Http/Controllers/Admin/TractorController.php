@@ -1,7 +1,8 @@
 <?php
-// TractorController.php - Modified to include new fields from migration
-namespace App\Http\Controllers;
 
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
 use App\Models\Tractor;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,7 +17,7 @@ class TractorController extends Controller
     public function index()
     {
         $tractors = Tractor::all();
-        return Inertia::render('Tractors/Index', [
+        return Inertia::render('Admin/Tractors/Index', [
             'tractors' => $tractors
         ]);
     }
@@ -27,7 +28,7 @@ class TractorController extends Controller
     public function create()
     {
         $availableUsers = User::all();
-        return Inertia::render('Tractors/Create', [
+        return Inertia::render('Admin/Tractors/Create', [
             'availableUsers' => $availableUsers
         ]);
     }
@@ -69,7 +70,7 @@ class TractorController extends Controller
     {
         $tractor->load(['owners', 'listings', 'aperos']); // Changed users to owners to match model relationship name
         
-        return Inertia::render('Tractors/Show', [
+        return Inertia::render('Admin/Tractors/Show', [
             'tractor' => $tractor
         ]);
     }
@@ -81,7 +82,7 @@ class TractorController extends Controller
     {
         $availableUsers = User::all();
         $tractor->load('owners'); // Changed users to owners to match model relationship name
-        return Inertia::render('Tractors/Edit', [
+        return Inertia::render('Admin/Tractors/Edit', [
             'tractor' => $tractor,
             'availableUsers' => $availableUsers
         ]);
@@ -133,7 +134,7 @@ class TractorController extends Controller
      */
     public function listings(Tractor $tractor)
     {
-        return Inertia::render('Tractors/Listings', [
+        return Inertia::render('Admin/Tractors/Listings', [
             'tractor' => $tractor,
             'listings' => $tractor->listings
         ]);
@@ -144,7 +145,7 @@ class TractorController extends Controller
      */
     public function users(Tractor $tractor)
     {
-        return Inertia::render('Tractors/Users', [
+        return Inertia::render('Admin/Tractors/Users', [
             'tractor' => $tractor,
             'users' => $tractor->owners
         ]);
@@ -158,7 +159,7 @@ class TractorController extends Controller
         $tractor->load('aperos');
         $availableAperos = \App\Models\Apero::whereNotIn('id', $tractor->aperos->pluck('id'))->get();
         
-        return Inertia::render('Tractors/AttachAperos', [
+        return Inertia::render('Admin/Tractors/AttachAperos', [
             'tractor' => $tractor,
             'attachedAperos' => $tractor->aperos,
             'availableAperos' => $availableAperos

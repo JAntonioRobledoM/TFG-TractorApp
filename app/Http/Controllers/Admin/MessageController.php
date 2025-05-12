@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Message;
 use App\Models\User;
 use App\Models\Notification;
@@ -49,7 +50,7 @@ class MessageController extends Controller
             }
         }
         
-        return Inertia::render('Messages/Index', [
+        return Inertia::render('Admin/Messages/Index', [
             'conversations' => array_values($conversations)
         ]);
     }
@@ -111,7 +112,7 @@ class MessageController extends Controller
             ->where('is_read', false)
             ->update(['is_read' => true]);
             
-        return Inertia::render('Messages/Show', [
+        return Inertia::render('Admin/Messages/Show', [
             'partner' => $partner,
             'messages' => $messages
         ]);

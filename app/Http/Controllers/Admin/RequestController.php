@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Request as TractorRequest;
 use App\Models\Listing;
 use App\Models\Notification;
@@ -17,7 +18,7 @@ class RequestController extends Controller
     public function index()
     {
         $requests = TractorRequest::with(['listing.tractor', 'requester'])->get();
-        return Inertia::render('Requests/Index', [
+        return Inertia::render('Admin/Requests/Index', [
             'requests' => $requests
         ]);
     }
@@ -32,7 +33,7 @@ class RequestController extends Controller
             $listing = Listing::with(['tractor', 'seller'])->findOrFail($request->listing_id);
         }
         
-        return Inertia::render('Requests/Create', [
+        return Inertia::render('Admin/Requests/Create', [
             'listing' => $listing,
             'listings' => Listing::where('is_active', true)->with(['tractor', 'seller'])->get()
         ]);
@@ -82,7 +83,7 @@ class RequestController extends Controller
     {
         $request->load(['listing.tractor', 'listing.seller', 'requester']);
         
-        return Inertia::render('Requests/Show', [
+        return Inertia::render('Admin/Requests/Show', [
             'request' => $request
         ]);
     }
@@ -94,7 +95,7 @@ class RequestController extends Controller
     {
         $request->load(['listing.tractor', 'requester']);
         
-        return Inertia::render('Requests/Edit', [
+        return Inertia::render('Admin/Requests/Edit', [
             'request' => $request,
             'listings' => Listing::where('is_active', true)->with(['tractor', 'seller'])->get()
         ]);

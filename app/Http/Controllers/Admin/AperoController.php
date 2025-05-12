@@ -1,11 +1,12 @@
 <?php
-// AperoController.php - Missing controller for Apero model
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Apero;
 use App\Models\Tractor;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+
 
 class AperoController extends Controller
 {
@@ -15,7 +16,7 @@ class AperoController extends Controller
     public function index()
     {
         $aperos = Apero::all();
-        return Inertia::render('Aperos/Index', [
+        return Inertia::render('Admin/Aperos/Index', [
             'aperos' => $aperos
         ]);
     }
@@ -25,7 +26,7 @@ class AperoController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Aperos/Create');
+        return Inertia::render('Admin/Aperos/Create');
     }
 
     /**
@@ -56,7 +57,7 @@ class AperoController extends Controller
     {
         $apero->load(['tractors']);
         
-        return Inertia::render('Aperos/Show', [
+        return Inertia::render('Admin/Aperos/Show', [
             'apero' => $apero
         ]);
     }
@@ -66,7 +67,7 @@ class AperoController extends Controller
      */
     public function edit(Apero $apero)
     {
-        return Inertia::render('Aperos/Edit', [
+        return Inertia::render('Admin/Aperos/Edit', [
             'apero' => $apero
         ]);
     }
@@ -108,7 +109,7 @@ class AperoController extends Controller
      */
     public function tractors(Apero $apero)
     {
-        return Inertia::render('Aperos/Tractors', [
+        return Inertia::render('Admin/Aperos/Tractors', [
             'apero' => $apero,
             'tractors' => $apero->tractors
         ]);
@@ -122,7 +123,7 @@ class AperoController extends Controller
         $apero->load('tractors');
         $availableTractors = Tractor::whereNotIn('id', $apero->tractors->pluck('id'))->get();
         
-        return Inertia::render('Aperos/AttachTractors', [
+        return Inertia::render('Admin/Aperos/AttachTractors', [
             'apero' => $apero,
             'attachedTractors' => $apero->tractors,
             'availableTractors' => $availableTractors

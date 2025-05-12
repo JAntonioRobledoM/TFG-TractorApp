@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Listing;
 use App\Models\Tractor;
 use App\Models\User;
@@ -16,7 +17,7 @@ class ListingController extends Controller
     public function index()
     {
         $listings = Listing::with(['tractor', 'seller'])->get();
-        return Inertia::render('Listings/Index', [
+        return Inertia::render('Admin/Listings/Index', [
             'listings' => $listings
         ]);
     }
@@ -28,7 +29,7 @@ class ListingController extends Controller
     {
         $tractors = Tractor::all();
         
-        return Inertia::render('Listings/Create', [
+        return Inertia::render('Admin/Listings/Create', [
             'tractors' => $tractors
         ]);
     }
@@ -64,7 +65,7 @@ class ListingController extends Controller
             $query->with('requester');
         }]);
         
-        return Inertia::render('Listings/Show', [
+        return Inertia::render('Admin/Listings/Show', [
             'listing' => $listing
         ]);
     }
@@ -76,7 +77,7 @@ class ListingController extends Controller
     {
         $tractors = Tractor::all();
         
-        return Inertia::render('Listings/Edit', [
+        return Inertia::render('Admin/Listings/Edit', [
             'listing' => $listing,
             'tractors' => $tractors
         ]);
@@ -125,7 +126,7 @@ class ListingController extends Controller
             ->with(['tractor', 'seller'])
             ->get();
             
-        return Inertia::render('Listings/Sales', [
+        return Inertia::render('Admin/Listings/Sales', [
             'listings' => $listings
         ]);
     }
@@ -140,7 +141,7 @@ class ListingController extends Controller
             ->with(['tractor', 'seller'])
             ->get();
             
-        return Inertia::render('Listings/Rentals', [
+        return Inertia::render('Admin/Listings/Rentals', [
             'listings' => $listings
         ]);
     }
@@ -154,7 +155,7 @@ class ListingController extends Controller
             $query->with('requester');
         }]);
         
-        return Inertia::render('Listings/Requests', [
+        return Inertia::render('Admin/Listings/Requests', [
             'listing' => $listing,
             'requests' => $listing->requests
         ]);

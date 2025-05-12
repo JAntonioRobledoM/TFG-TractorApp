@@ -1,7 +1,8 @@
 <?php
-// UserController.php - Modified to use password instead of pass to match Laravel conventions
-namespace App\Http\Controllers;
 
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Tractor;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ class UserController extends Controller
     public function index()
     {
         $users = User::all();
-        return Inertia::render('Users/Index', [
+        return Inertia::render('Admin/Users/Index', [
             'users' => $users
         ]);
     }
@@ -27,7 +28,7 @@ class UserController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Users/Create');
+        return Inertia::render('Admin/Users/Create');
     }
 
     /**
@@ -64,7 +65,7 @@ class UserController extends Controller
     {
         $user->load(['tractors', 'listings', 'requests']);
         
-        return Inertia::render('Users/Show', [
+        return Inertia::render('Admin/Users/Show', [
             'user' => $user,
             'availableTractors' => Tractor::whereNotIn('id', $user->tractors->pluck('id'))->get()
         ]);
@@ -104,7 +105,7 @@ class UserController extends Controller
         $assignedTractors = $user->tractors;
         $availableTractors = Tractor::whereNotIn('id', $assignedTractors->pluck('id'))->get();
 
-        return Inertia::render('Users/AssignTractors', [
+        return Inertia::render('Admin/Users/AssignTractors', [
             'user' => $user,
             'assignedTractors' => $assignedTractors,
             'availableTractors' => $availableTractors
@@ -116,7 +117,7 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        return Inertia::render('Users/Edit', [
+        return Inertia::render('Admin/Users/Edit', [
             'user' => $user
         ]);
     }
@@ -167,7 +168,7 @@ class UserController extends Controller
      */
     public function tractors(User $user)
     {
-        return Inertia::render('Users/Tractors', [
+        return Inertia::render('Admin/Users/Tractors', [
             'user' => $user,
             'tractors' => $user->tractors
         ]);
@@ -178,7 +179,7 @@ class UserController extends Controller
      */
     public function listings(User $user)
     {
-        return Inertia::render('Users/Listings', [
+        return Inertia::render('Admin/Users/Listings', [
             'user' => $user,
             'listings' => $user->listings
         ]);

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,7 +19,7 @@ class NotificationController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
             
-        return Inertia::render('Notifications/Index', [
+        return Inertia::render('Admin/Notifications/Index', [
             'notifications' => $notifications
         ]);
     }
@@ -50,7 +51,7 @@ class NotificationController extends Controller
                 break;
         }
         
-        return Inertia::render('Notifications/Show', [
+        return Inertia::render('Admin/Notifications/Show', [
             'notification' => $notification
         ]);
     }

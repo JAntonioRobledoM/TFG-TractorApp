@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -43,7 +44,7 @@ class ConversationController extends Controller
                 ->count();
         }
         
-        return Inertia::render('Conversations/Index', [
+        return Inertia::render('Admin/Conversations/Index', [
             'conversations' => $conversations
         ]);
     }
@@ -55,7 +56,7 @@ class ConversationController extends Controller
     {
         $users = User::all();
         
-        return Inertia::render('Conversations/Create', [
+        return Inertia::render('Admin/Conversations/Create', [
             'users' => $users
         ]);
     }
@@ -115,7 +116,7 @@ class ConversationController extends Controller
             ->where('is_read', false)
             ->update(['is_read' => true]);
             
-        return Inertia::render('Conversations/Show', [
+        return Inertia::render('Admin/Conversations/Show', [
             'conversation' => $conversation,
             'messages' => $messages
         ]);
@@ -129,7 +130,7 @@ class ConversationController extends Controller
         $conversation->load(['users']);
         $users = User::all();
         
-        return Inertia::render('Conversations/Edit', [
+        return Inertia::render('Admin/Conversations/Edit', [
             'conversation' => $conversation,
             'users' => $users
         ]);
