@@ -7,7 +7,7 @@
                     <div class="flex">
                         <!-- Logo with tractor icon -->
                         <div class="shrink-0 flex items-center">
-                            <Link :href="route('dashboard')" class="flex items-center space-x-2 text-xl font-bold">
+                            <Link :href="route('home')" class="flex items-center space-x-2 text-xl font-bold">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-8 w-8 text-yellow-400" fill="currentColor">
                                     <path d="M19 8h-2c0-.6-.4-1-1-1h-2c-.6 0-1 .4-1 1h-2c-1.7 0-3 1.3-3 3v3c0 1.7 1.3 3 3 3h8c1.7 0 3-1.3 3-3v-3c0-1.7-1.3-3-3-3zm-2 9c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3zM5 11c-1.7 0-3 1.3-3 3s1.3 3 3 3 3-1.3 3-3-1.3-3-3-3z"/>
                                 </svg>

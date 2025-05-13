@@ -62,10 +62,6 @@
                     <div class="font-medium text-sm text-green-600">{{ $page.props.auth.user.email }}</div>
                   </div>
 
-                  <!-- Enlace al panel de control para usuarios normales -->
-                  <Link :href="route('user.dashboard')" class="block w-full px-4 py-2 text-left text-sm leading-5 text-gray-700 hover:bg-green-50 focus:outline-none focus:bg-green-50 transition duration-150 ease-in-out">
-                    Panel de Control
-                  </Link>
 
                   <!-- Panel de Admin - Solo visible para administradores -->
                   <Link 
@@ -81,6 +77,14 @@
                       Panel de Admin
                     </div>
                   </Link>
+
+                  
+                  <!-- Enlace al panel de control para usuarios normales -->
+                  <Link :href="route('user.dashboard')" class="block w-full px-4 py-2 text-left text-sm leading-5 text-gray-700 hover:bg-green-50 focus:outline-none focus:bg-green-50 transition duration-150 ease-in-out">
+                    Panel de Control
+                  </Link>
+
+                  
 
                   <Link :href="route('logout')" method="post" as="button" class="block w-full px-4 py-2 text-left text-sm leading-5 text-gray-700 hover:bg-green-50 focus:outline-none focus:bg-green-50 transition duration-150 ease-in-out">
                     Cerrar sesión

@@ -42,15 +42,15 @@ class UserController extends Controller
             'last_name' => ['required', 'string', 'max:255'],
             'dni' => ['nullable', 'string', 'max:20'],
             'tlf' => ['nullable', 'numeric'],
-            'password' => ['required', 'string', 'min:8'], // Changed from 'pass' to 'password'
+            'pass' => ['required', 'string', 'min:8'],
             'email' => ['nullable', 'string', 'email', 'max:255', 'unique:users'],
             'is_admin' => ['nullable', 'boolean'],
             'pfp' => ['nullable', 'string', 'max:255'],
         ]);
 
         // Hash password
-        $validated['pass'] = Hash::make($validated['password']); // Store hashed password in 'pass' field
-        unset($validated['password']); // Remove 'password' from validated data
+        $validated['pass'] = Hash::make($validated['pass']); 
+        unset($validated['password']); 
 
         $user = User::create($validated);
 
