@@ -54,10 +54,39 @@ class Listing extends Model
     }
 
     /**
+     * Alias for the seller relation.
+     * This allows accessing the seller as 'user' for backward compatibility.
+     */
+    public function user()
+    {
+        return $this->seller();
+    }
+
+    /**
      * Get the requests for this listing.
      */
     public function requests()
     {
         return $this->hasMany(Request::class);
+    }
+
+    /**
+     * Get a single apero relationship through the tractor.
+     * This is a convenience method for accessing the first apero.
+     */
+    public function apero()
+    {
+        return $this->hasOneThrough(
+            Apero::class,
+            Tractor::class,
+            'id', // Clave en la tabla tractors
+            'id', // Clave en la tabla aperos
+            'tractor_id', // Clave foránea en listings
+            'id' // Clave local en tractors
+        )->whereExists(function ($query) {
+            $query->from('apero_tractor')
+                ->whereColumn('apero_tractor.tractor_id', 'tractors.id')
+                ->whereColumn('apero_tractor.apero_id', 'aperos.id');
+        });
     }
 }
