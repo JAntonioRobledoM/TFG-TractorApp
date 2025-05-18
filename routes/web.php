@@ -75,6 +75,102 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('requests', [RequestController::class, 'store'])->name('requests.store');
         Route::get('requests/{request}', [RequestController::class, 'show'])->name('requests.show');
         Route::patch('requests/{request}/cancel', [RequestController::class, 'cancel'])->name('requests.cancel');
+
+            // Ruta para activar/desactivar un anuncio
+    Route::put('listings/{listing}/toggle-status', function (App\Models\Listing $listing) {
+        // Verificar que el usuario es propietario del anuncio
+        if ($listing->seller_id !== auth()->id()) {
+            abort(403, 'No tienes permiso para modificar este anuncio.');
+        }
+        
+        // Cambiar el estado
+        $listing->update([
+            'is_active' => !$listing->is_active
+        ]);
+        
+        return back()->with('message', 'El estado del anuncio se ha actualizado correctamente.');
+    })->name('listings.toggle-status');
+    
+    // Rutas para aceptar/rechazar/completar solicitudes
+    Route::put('requests/{request}/accept', function (App\Models\Request $request) {
+        // Verificar que el usuario es el propietario del anuncio
+        $listing = $request->listing;
+        if (!$listing || $listing->seller_id !== auth()->id()) {
+            abort(403, 'No tienes permiso para aceptar esta solicitud.');
+        }
+        
+        // Verificar que la solicitud está pendiente
+        if ($request->status !== 'pending') {
+            return back()->with('error', 'Solo puedes aceptar solicitudes pendientes.');
+        }
+        
+        // Actualizar el estado de la solicitud
+        $request->update([
+            'status' => 'accepted'
+        ]);
+        
+        return back()->with('message', 'Solicitud aceptada correctamente.');
+    })->name('requests.accept');
+    
+    Route::put('requests/{request}/reject', function (App\Models\Request $request) {
+        // Verificar que el usuario es el propietario del anuncio
+        $listing = $request->listing;
+        if (!$listing || $listing->seller_id !== auth()->id()) {
+            abort(403, 'No tienes permiso para rechazar esta solicitud.');
+        }
+        
+        // Verificar que la solicitud está pendiente
+        if ($request->status !== 'pending') {
+            return back()->with('error', 'Solo puedes rechazar solicitudes pendientes.');
+        }
+        
+        // Actualizar el estado de la solicitud
+        $request->update([
+            'status' => 'rejected'
+        ]);
+        
+        return back()->with('message', 'Solicitud rechazada correctamente.');
+    })->name('requests.reject');
+    
+    Route::put('requests/{request}/complete', function (App\Models\Request $request) {
+        // Verificar que el usuario es el propietario del anuncio o el solicitante
+        $listing = $request->listing;
+        if (!$listing || ($listing->seller_id !== auth()->id() && $request->requester_id !== auth()->id())) {
+            abort(403, 'No tienes permiso para completar esta solicitud.');
+        }
+        
+        // Verificar que la solicitud está aceptada
+        if ($request->status !== 'accepted') {
+            return back()->with('error', 'Solo puedes completar solicitudes aceptadas.');
+        }
+        
+        // Actualizar el estado de la solicitud
+        $request->update([
+            'status' => 'completed'
+        ]);
+        
+        // Si es una solicitud de compra, desactivar el anuncio
+        if ($request->type === 'sale') {
+            $listing->update([
+                'is_active' => false
+            ]);
+        }
+        
+        return back()->with('message', 'Solicitud marcada como completada correctamente.');
+    })->name('requests.complete');
+    
+    // Ruta para eliminar un anuncio
+    Route::delete('listings/{listing}', function (App\Models\Listing $listing) {
+        // Verificar que el usuario es propietario del anuncio
+        if ($listing->seller_id !== auth()->id()) {
+            abort(403, 'No tienes permiso para eliminar este anuncio.');
+        }
+        
+        $listing->delete();
+        
+        return redirect()->route('user.dashboard')
+            ->with('message', 'Anuncio eliminado correctamente.');
+    })->name('listings.destroy');
     });
 });
 

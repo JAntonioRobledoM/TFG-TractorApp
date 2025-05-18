@@ -1,3 +1,4 @@
+<!-- resources/js/Pages/User/Dashboard.vue -->
 <template>
   <div class="min-h-screen bg-gradient-to-b from-green-50 to-green-100">
     <PublicLayout>
@@ -74,9 +75,14 @@
               </div>
               <div class="p-4">
                 <div v-if="userListings && userListings.length > 0" class="space-y-3">
-                  <div v-for="listing in userListings" :key="listing.id" class="border-b border-gray-100 pb-2 last:border-b-0 last:pb-0">
+                  <div 
+                    v-for="listing in userListings" 
+                    :key="listing.id" 
+                    class="border-b border-gray-100 pb-2 last:border-b-0 last:pb-0 hover:bg-green-50 cursor-pointer transition-colors duration-200 p-2 rounded-md"
+                    @click="showListingDetails(listing)"
+                  >
                     <div class="font-medium text-gray-800">
-                      {{ listing.title || 'Anuncio #' + listing.id }}
+                      {{ listing.title || (listing.tractor ? `${listing.tractor.brand} ${listing.tractor.model}` : 'Anuncio #' + listing.id) }}
                     </div>
                     <div class="text-sm text-gray-600 flex justify-between">
                       <span>{{ listing.type === 'sale' ? 'Venta' : 'Alquiler' }}</span>
@@ -88,7 +94,7 @@
                   No tienes anuncios publicados
                 </div>
                 <div class="mt-4">
-                  <button class="w-full py-2 bg-green-100 text-green-700 hover:bg-green-200 rounded-md transition duration-200 flex items-center justify-center">
+                  <button @click="showCreateListingForm" class="w-full py-2 bg-green-100 text-green-700 hover:bg-green-200 rounded-md transition duration-200 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
                     </svg>
@@ -108,7 +114,12 @@
               </div>
               <div class="p-4">
                 <div v-if="userRequests && userRequests.length > 0" class="space-y-3">
-                  <div v-for="request in userRequests" :key="request.id" class="border-b border-gray-100 pb-2 last:border-b-0 last:pb-0">
+                  <div 
+                    v-for="request in userRequests" 
+                    :key="request.id" 
+                    class="border-b border-gray-100 pb-2 last:border-b-0 last:pb-0 hover:bg-green-50 cursor-pointer transition-colors duration-200 p-2 rounded-md"
+                    @click="showRequestDetails(request)"
+                  >
                     <div class="font-medium text-gray-800 flex items-center">
                       <span class="mr-2">Solicitud #{{ request.id }}</span>
                       <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
@@ -131,7 +142,7 @@
                   No tienes solicitudes
                 </div>
                 <div class="mt-4">
-                  <button class="w-full py-2 bg-green-100 text-green-700 hover:bg-green-200 rounded-md transition duration-200 flex items-center justify-center">
+                  <button @click="showCreateRequestForm" class="w-full py-2 bg-green-100 text-green-700 hover:bg-green-200 rounded-md transition duration-200 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
                     </svg>
@@ -171,13 +182,67 @@
         </div>
       </div>
     </PublicLayout>
+
+    <!-- Modal para mostrar detalles del anuncio -->
+    <ListingShow 
+      v-if="selectedListing" 
+      :listing="selectedListing" 
+      @close="selectedListing = null"
+      @edit="editListing"
+      @delete="confirmDeleteListing"
+      @toggle-status="toggleListingStatus"
+      @view-request="showRequestDetails"
+    />
+
+    <!-- Modal para mostrar detalles de la solicitud -->
+    <RequestShow 
+      v-if="selectedRequest" 
+      :request="selectedRequest"
+      :current-user-id="$page.props.auth.user.id"
+      @close="selectedRequest = null"
+      @cancel="cancelRequest"
+      @accept="acceptRequest"
+      @reject="rejectRequest"
+      @complete="completeRequest"
+      @view-listing="showListingDetails"
+    />
+
+    <!-- Modal de confirmación para eliminar -->
+    <div v-if="showDeleteConfirmation" class="fixed inset-0 bg-gray-800 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex items-center justify-center px-4">
+      <div class="bg-white shadow-lg rounded-lg overflow-hidden max-w-md w-full mx-auto">
+        <div class="p-4 bg-red-600 text-white font-medium">
+          Confirmar eliminación
+        </div>
+        <div class="p-6">
+          <p class="text-gray-700 mb-4">
+            ¿Estás seguro de que deseas eliminar este elemento? Esta acción no se puede deshacer.
+          </p>
+          <div class="flex space-x-3">
+            <button 
+              @click="deleteConfirmed" 
+              class="flex-1 py-2 bg-red-600 text-white hover:bg-red-700 rounded-md transition duration-200"
+            >
+              Eliminar
+            </button>
+            <button 
+              @click="cancelDelete" 
+              class="flex-1 py-2 bg-gray-300 text-gray-700 hover:bg-gray-400 rounded-md transition duration-200"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
-import { computed } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import ListingShow from '@/Components/User/ListingShow.vue';
+import RequestShow from '@/Components/User/RequestShow.vue';
 
 // Propiedades del componente
 const props = defineProps({
@@ -185,6 +250,12 @@ const props = defineProps({
   userListings: Array,
   userRequests: Array,
 });
+
+// Estados para los modales y selecciones
+const selectedListing = ref(null);
+const selectedRequest = ref(null);
+const showDeleteConfirmation = ref(false);
+const itemToDelete = ref(null);
 
 // Formateador de moneda
 const formatCurrency = (value) => {
@@ -199,7 +270,127 @@ const requestStatusText = (status) => {
     case 'accepted': return 'Aceptada';
     case 'rejected': return 'Rechazada';
     case 'completed': return 'Completada';
+    case 'cancelled': return 'Cancelada';
     default: return status;
   }
+};
+
+// Funciones para mostrar detalles
+const showListingDetails = (listing) => {
+  // Cargar los datos completos si es necesario
+  if (!listing.tractor || !listing.requests) {
+    router.get(route('user.listings.show', listing.id), {}, {
+      preserveState: true,
+      onSuccess: (page) => {
+        selectedListing.value = page.props.listing;
+      }
+    });
+  } else {
+    selectedListing.value = listing;
+  }
+};
+
+const showRequestDetails = (request) => {
+  // Cargar los datos completos si es necesario
+  if (!request.listing) {
+    router.get(route('user.requests.show', request.id), {}, {
+      preserveState: true,
+      onSuccess: (page) => {
+        selectedRequest.value = page.props.request;
+      }
+    });
+  } else {
+    selectedRequest.value = request;
+  }
+};
+
+// Funciones para gestionar anuncios
+const editListing = (listing) => {
+  selectedListing.value = null;
+  // Implementar lógica para abrir modal de edición 
+  // (se implementará en futuros desarrollos)
+};
+
+const confirmDeleteListing = (listing) => {
+  itemToDelete.value = { type: 'listing', item: listing };
+  showDeleteConfirmation.value = true;
+};
+
+const toggleListingStatus = (listing) => {
+  router.put(route('user.listings.toggle-status', listing.id), {}, {
+    onSuccess: () => {
+      // Actualizar el estado del anuncio localmente
+      listing.is_active = !listing.is_active;
+    }
+  });
+};
+
+// Funciones para gestionar solicitudes
+const cancelRequest = (request) => {
+  router.patch(route('user.requests.cancel', request.id), {}, {
+    onSuccess: () => {
+      // Actualizar el estado de la solicitud localmente
+      request.status = 'cancelled';
+      selectedRequest.value = null;
+    }
+  });
+};
+
+const acceptRequest = (request) => {
+  router.put(route('user.requests.accept', request.id), {}, {
+    onSuccess: () => {
+      request.status = 'accepted';
+    }
+  });
+};
+
+const rejectRequest = (request) => {
+  router.put(route('user.requests.reject', request.id), {}, {
+    onSuccess: () => {
+      request.status = 'rejected';
+    }
+  });
+};
+
+const completeRequest = (request) => {
+  router.put(route('user.requests.complete', request.id), {}, {
+    onSuccess: () => {
+      request.status = 'completed';
+    }
+  });
+};
+
+// Gestión de formularios de creación
+const showCreateListingForm = () => {
+  // Implementar lógica para mostrar modal de creación de anuncio
+  // (se implementará en futuros desarrollos)
+};
+
+const showCreateRequestForm = () => {
+  // Implementar lógica para mostrar modal de creación de solicitud
+  // (se implementará en futuros desarrollos)
+};
+
+// Funciones para eliminar elementos
+const deleteConfirmed = () => {
+  if (itemToDelete.value.type === 'listing') {
+    const listing = itemToDelete.value.item;
+    router.delete(route('user.listings.destroy', listing.id), {
+      onSuccess: () => {
+        selectedListing.value = null;
+        // Actualizar la lista de anuncios eliminando el elemento del array
+        props.userListings.splice(props.userListings.findIndex(l => l.id === listing.id), 1);
+      }
+    });
+  }
+  
+  // Cerrar el modal de confirmación
+  showDeleteConfirmation.value = false;
+  itemToDelete.value = null;
+};
+
+const cancelDelete = () => {
+  showDeleteConfirmation.value = false;
+  itemToDelete.value = null;
 };
 </script>

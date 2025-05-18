@@ -108,4 +108,83 @@ class RequestController extends Controller
         return redirect()->route('user.requests.index')
             ->with('message', 'Solicitud cancelada correctamente.');
     }
+
+    /**
+ * Accept a request.
+ */
+public function accept(RequestModel $request)
+{
+    // Verificar que el usuario es el propietario del anuncio
+    $listing = $request->listing;
+    if (!$listing || $listing->seller_id !== auth()->id()) {
+        abort(403, 'No tienes permiso para aceptar esta solicitud.');
+    }
+    
+    // Verificar que la solicitud está pendiente
+    if ($request->status !== 'pending') {
+        return back()->with('error', 'Solo puedes aceptar solicitudes pendientes.');
+    }
+    
+    // Actualizar el estado de la solicitud
+    $request->update([
+        'status' => 'accepted'
+    ]);
+    
+    return back()->with('message', 'Solicitud aceptada correctamente.');
+}
+
+/**
+ * Reject a request.
+ */
+public function reject(RequestModel $request)
+{
+    // Verificar que el usuario es el propietario del anuncio
+    $listing = $request->listing;
+    if (!$listing || $listing->seller_id !== auth()->id()) {
+        abort(403, 'No tienes permiso para rechazar esta solicitud.');
+    }
+    
+    // Verificar que la solicitud está pendiente
+    if ($request->status !== 'pending') {
+        return back()->with('error', 'Solo puedes rechazar solicitudes pendientes.');
+    }
+    
+    // Actualizar el estado de la solicitud
+    $request->update([
+        'status' => 'rejected'
+    ]);
+    
+    return back()->with('message', 'Solicitud rechazada correctamente.');
+}
+
+/**
+ * Mark a request as completed.
+ */
+public function complete(RequestModel $request)
+{
+    // Verificar que el usuario es el propietario del anuncio o el solicitante
+    $listing = $request->listing;
+    if (!$listing || ($listing->seller_id !== auth()->id() && $request->requester_id !== auth()->id())) {
+        abort(403, 'No tienes permiso para completar esta solicitud.');
+    }
+    
+    // Verificar que la solicitud está aceptada
+    if ($request->status !== 'accepted') {
+        return back()->with('error', 'Solo puedes completar solicitudes aceptadas.');
+    }
+    
+    // Actualizar el estado de la solicitud
+    $request->update([
+        'status' => 'completed'
+    ]);
+    
+    // Si es una solicitud de compra, desactivar el anuncio
+    if ($request->type === 'sale') {
+        $listing->update([
+            'is_active' => false
+        ]);
+    }
+    
+    return back()->with('message', 'Solicitud marcada como completada correctamente.');
+}
 }

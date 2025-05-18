@@ -78,4 +78,19 @@ class ListingController extends Controller
             'userRequest' => $userRequest
         ]);
     }
+
+    public function toggleStatus(Listing $listing)
+    {
+        // Verificar que el usuario es propietario del anuncio
+        if ($listing->seller_id !== auth()->id()) {
+            abort(403, 'No tienes permiso para modificar este anuncio.');
+        }
+        
+        // Cambiar el estado
+        $listing->update([
+            'is_active' => !$listing->is_active
+        ]);
+        
+        return back()->with('message', 'El estado del anuncio se ha actualizado correctamente.');
+    }
 }
