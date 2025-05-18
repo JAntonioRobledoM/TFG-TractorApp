@@ -6,8 +6,8 @@ use Inertia\Inertia;
 // Importar controladores desde el namespace Admin
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\TractorController;
-use App\Http\Controllers\Admin\ListingController;
-use App\Http\Controllers\Admin\RequestController;
+use App\Http\Controllers\Admin\ListingController as AdminListingController;
+use App\Http\Controllers\Admin\RequestController as AdminRequestController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\MessageController;
 use App\Http\Controllers\Admin\ConversationController;
@@ -17,9 +17,13 @@ use App\Http\Controllers\Public\ContactController;
 // Importar controlador público principal
 use App\Http\Controllers\Public\HomeController;
 
+// Importar controladores de User
+use App\Http\Controllers\User\ListingController;
+use App\Http\Controllers\User\RequestController;
+
 use App\Models\User;
 use App\Models\Tractor;
-use App\Models\Listing;
+use App\Models\Listing as ListingModel;
 use App\Models\Request as RequestModel;
 use App\Models\Apero;
 
@@ -29,8 +33,8 @@ Route::get('/contacto', [ContactController::class, 'index'])->name('contact');
 Route::post('/contacto', [ContactController::class, 'store']);
 
 // Rutas de venta/alquiler públicas
-Route::get('listings/sales', [ListingController::class, 'sales'])->name('listings.sales');
-Route::get('listings/rentals', [ListingController::class, 'rentals'])->name('listings.rentals');
+Route::get('listings/sales', [AdminListingController::class, 'sales'])->name('listings.sales');
+Route::get('listings/rentals', [AdminListingController::class, 'rentals'])->name('listings.rentals');
 
 // Dashboard para usuarios normales (accesible a todos los usuarios autenticados)
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -57,6 +61,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
     Route::get('notifications/recent', [NotificationController::class, 'recent'])->name('notifications.recent');
     Route::get('messages/unread-count', [MessageController::class, 'unreadCount'])->name('messages.unread-count');
+    
+    // Rutas de usuario para anuncios y solicitudes
+    Route::prefix('user')->name('user.')->group(function () {
+        // Rutas de anuncios
+        Route::get('listings', [ListingController::class, 'index'])->name('listings.index');
+        Route::get('listings/sales', [ListingController::class, 'sales'])->name('listings.sales');
+        Route::get('listings/rentals', [ListingController::class, 'rentals'])->name('listings.rentals');
+        Route::get('listings/{listing}', [ListingController::class, 'show'])->name('listings.show');
+        
+        // Rutas de solicitudes
+        Route::get('requests', [RequestController::class, 'index'])->name('requests.index');
+        Route::post('requests', [RequestController::class, 'store'])->name('requests.store');
+        Route::get('requests/{request}', [RequestController::class, 'show'])->name('requests.show');
+        Route::patch('requests/{request}/cancel', [RequestController::class, 'cancel'])->name('requests.cancel');
+    });
 });
 
 // Rutas que requieren autenticación Y rol de administrador
@@ -68,13 +87,13 @@ Route::middleware(['auth', 'admin'])->group(function () {
                 'users' => User::count(),
                 'tractors' => Tractor::count(),
                 'aperos' => Apero::count(),
-                'activeListings' => Listing::where('is_active', true)->count(),
+                'activeListings' => ListingModel::where('is_active', true)->count(),
                 'pendingRequests' => RequestModel::where('status', 'pending')->count(),
             ],
             'recentUsers' => User::latest()->take(5)->get(),
             'recentTractors' => Tractor::latest()->take(5)->get(),
             'recentAperos' => Apero::latest()->take(5)->get(),
-            'recentListings' => Listing::with('tractor')->latest()->take(5)->get(),
+            'recentListings' => ListingModel::with('tractor')->latest()->take(5)->get(),
             'recentRequests' => RequestModel::with('requester')->latest()->take(5)->get(),
             'recentNotifications' => auth()->user()->notifications()->latest()->take(5)->get(),
         ]);
@@ -87,9 +106,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('users/{user}/assign-tractors', [UserController::class, 'assignTractors'])->name('users.assign-tractors');
     Route::post('users/{user}/add-tractor', [UserController::class, 'addTractor'])->name('users.add-tractor');
     Route::delete('users/{user}/remove-tractor/{tractor}', [UserController::class, 'removeTractor'])->name('users.remove-tractor');
-    
-    // El resto de tus rutas de administrador...
-    // (rutas existentes sin cambios)
     
     // Rutas de gestión de tractores
     Route::resource('tractors', TractorController::class);
@@ -107,14 +123,14 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete('aperos/{apero}/detach-tractor/{tractor}', [AperoController::class, 'detachTractor'])->name('aperos.detach-tractor');
     
     // Rutas de gestión de anuncios
-    Route::resource('listings', ListingController::class);
-    Route::get('listings/{listing}/requests', [ListingController::class, 'requests'])->name('listings.requests');
+    Route::resource('listings', AdminListingController::class);
+    Route::get('listings/{listing}/requests', [AdminListingController::class, 'requests'])->name('listings.requests');
     
     // Rutas de gestión de solicitudes
-    Route::resource('requests', RequestController::class);
-    Route::patch('requests/{request}/accept', [RequestController::class, 'accept'])->name('requests.accept');
-    Route::patch('requests/{request}/reject', [RequestController::class, 'reject'])->name('requests.reject');
-    Route::patch('requests/{request}/complete', [RequestController::class, 'complete'])->name('requests.complete');
+    Route::resource('requests', AdminRequestController::class);
+    Route::patch('requests/{request}/accept', [AdminRequestController::class, 'accept'])->name('requests.accept');
+    Route::patch('requests/{request}/reject', [AdminRequestController::class, 'reject'])->name('requests.reject');
+    Route::patch('requests/{request}/complete', [AdminRequestController::class, 'complete'])->name('requests.complete');
     
     // Rutas de gestión de notificaciones
     Route::resource('notifications', NotificationController::class)->only(['index', 'show', 'destroy']);

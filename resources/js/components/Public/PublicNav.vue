@@ -25,6 +25,19 @@
               </svg>
               <span>Inicio</span>
             </Link>
+
+            <!-- Enlace a Anuncios - Solo visible para usuarios con sesión iniciada -->
+            <Link 
+              v-if="$page.props.auth.user"
+              :href="route('user.listings.index')" 
+              class="text-green-100 hover:text-yellow-400 hover:bg-green-800 px-3 py-2 rounded-md transition duration-200 flex items-center space-x-2"
+              :class="{'bg-green-800 text-yellow-400': route().current('user.listings.*')}"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <span>Anuncios</span>
+            </Link>
             
             <Link 
               :href="route('contact')" 
@@ -84,7 +97,10 @@
                     Panel de Control
                   </Link>
 
-                  
+                  <!-- Enlace a Mis Solicitudes -->
+                  <Link :href="route('user.requests.index')" class="block w-full px-4 py-2 text-left text-sm leading-5 text-gray-700 hover:bg-green-50 focus:outline-none focus:bg-green-50 transition duration-150 ease-in-out">
+                    Mis Solicitudes
+                  </Link>
 
                   <Link :href="route('logout')" method="post" as="button" class="block w-full px-4 py-2 text-left text-sm leading-5 text-gray-700 hover:bg-green-50 focus:outline-none focus:bg-green-50 transition duration-150 ease-in-out">
                     Cerrar sesión
@@ -123,6 +139,14 @@
               class="text-green-100 hover:text-yellow-400 hover:bg-green-700 block px-3 py-2 rounded-md text-base font-medium">
           Inicio
         </Link>
+        <!-- Enlace a Anuncios para móvil - Solo visible para usuarios con sesión iniciada -->
+        <Link 
+          v-if="$page.props.auth.user"
+          :href="route('user.listings.index')" 
+          :class="{'bg-green-700 text-yellow-400': route().current('user.listings.*')}"
+          class="text-green-100 hover:text-yellow-400 hover:bg-green-700 block px-3 py-2 rounded-md text-base font-medium">
+          Anuncios
+        </Link>
         <Link :href="route('contact')" 
               :class="{'bg-green-700 text-yellow-400': route().current('contact')}"
               class="text-green-100 hover:text-yellow-400 hover:bg-green-700 block px-3 py-2 rounded-md text-base font-medium">
@@ -142,6 +166,11 @@
             <!-- Panel de usuario para móvil -->
             <Link :href="route('user.dashboard')" class="block px-3 py-2 rounded-md text-base font-medium text-green-100 hover:text-yellow-400 hover:bg-green-700">
               Panel de Control
+            </Link>
+
+            <!-- Mis solicitudes para móvil -->
+            <Link :href="route('user.requests.index')" class="block px-3 py-2 rounded-md text-base font-medium text-green-100 hover:text-yellow-400 hover:bg-green-700">
+              Mis Solicitudes
             </Link>
             
             <!-- Panel de Admin en versión móvil - Solo visible para administradores -->
