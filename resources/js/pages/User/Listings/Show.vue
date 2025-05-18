@@ -202,7 +202,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import UserLayout from '@/Layouts/UserLayout.vue';
 
 const props = defineProps({
@@ -210,12 +210,14 @@ const props = defineProps({
   userRequest: Object
 });
 
+const page = usePage();
+
 const loading = ref(false);
 const similarListings = ref([]);
 
 const isOwnListing = computed(() => {
   if (!props.listing || !props.listing.seller || !props.listing.seller.id) return false;
-  return props.listing.seller.id === ($page.props.auth.user ? $page.props.auth.user.id : null);
+  return props.listing.seller.id === (page.props.auth.user ? page.props.auth.user.id : null);
 });
 
 const requestStatusText = {
