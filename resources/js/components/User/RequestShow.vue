@@ -168,6 +168,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { Link, router } from '@inertiajs/vue3';
+import UserLayout from '@/Layouts/UserLayout.vue';
 
 const props = defineProps({
   request: {
@@ -213,4 +215,20 @@ const requestStatusText = (status) => {
     default: return status;
   }
 };
+
+function cancelRequest() {
+  if (!confirm('¿Estás seguro de que deseas cancelar esta solicitud?')) {
+    return;
+  }
+  
+  router.patch(route('user.requests.cancel', props.request.id), {}, {
+    onSuccess: () => {
+      // Recargar la página después de cancelar
+      router.reload();
+    },
+    onError: (error) => {
+      console.error('Error al cancelar la solicitud:', error);
+    }
+  });
+}
 </script>

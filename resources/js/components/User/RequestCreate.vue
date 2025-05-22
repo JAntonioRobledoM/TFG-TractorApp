@@ -207,9 +207,10 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<!-- resources/js/components/User/RequestCreate.vue -->
+<script setup>
 import { ref, computed } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { useForm, router } from '@inertiajs/vue3';
 
 const props = defineProps({
   availableListings: {
@@ -262,23 +263,42 @@ const formatCurrency = (value) => {
 
 // Enviar formulario
 const submitForm = () => {
+  if (!selectedListing.value) {
+    console.error('No hay anuncio seleccionado');
+    alert('Por favor, selecciona un anuncio primero');
+    return;
+  }
+  
+  console.log('Enviando solicitud para anuncio:', selectedListing.value.id);
+  
   // Establecer el ID del anuncio seleccionado
   form.listing_id = selectedListing.value.id;
   
   // Validación adicional
   if (selectedListing.value.type === 'rental' && (!form.requested_start_date || !form.requested_end_date)) {
+    console.warn('Faltan fechas para el alquiler');
     if (!form.requested_start_date) form.errors.requested_start_date = 'La fecha de inicio es obligatoria para alquileres';
     if (!form.requested_end_date) form.errors.requested_end_date = 'La fecha de fin es obligatoria para alquileres';
     return;
   }
   
+  // Asegurarse de que el precio ofrecido tenga un valor
+  if (!form.offered_price) {
+    console.log('Usando precio del anuncio como precio ofrecido');
+    form.offered_price = selectedListing.value.price;
+  }
+  
+  console.log('Datos de la solicitud a enviar:', {
+    listing_id: form.listing_id,
+    offered_price: form.offered_price,
+    message: form.message,
+  });
+  
   form.post(route('user.requests.store'), {
-    onSuccess: () => {
-      // Emitir evento para informar que se ha creado la solicitud
-      form.reset();
-      form.clearErrors();
-      // Notificar al componente padre que se ha creado una solicitud
-      emit('created');
+    onSuccess: (page) => {
+      console.log('Solicitud creada con éxito, recargando página');
+      emit('close');
+      router.reload();
     },
     onError: (errors) => {
       console.error('Error al crear la solicitud:', errors);

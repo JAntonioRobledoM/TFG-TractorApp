@@ -98,16 +98,7 @@
                                         class="cursor-pointer rounded-md border-b border-gray-100 p-2 pb-2 transition-colors duration-200 last:border-b-0 last:pb-0 hover:bg-green-50"
                                         @click="showListingDetails(listing)"
                                     >
-                                        <div class="font-medium text-gray-800">
-                                            {{
-                                                listing.title ||
-                                                (listing.tractor ? `${listing.tractor.brand} ${listing.tractor.model}` : 'Anuncio #' + listing.id)
-                                            }}
-                                        </div>
-                                        <div class="flex justify-between text-sm text-gray-600">
-                                            <span>{{ listing.type === 'sale' ? 'Venta' : 'Alquiler' }}</span>
-                                            <span class="font-bold text-green-600">{{ formatCurrency(listing.price) }}</span>
-                                        </div>
+                                        <!-- Contenido del anuncio -->
                                     </div>
                                 </div>
                                 <div v-else class="py-4 text-center text-gray-500">No tienes anuncios publicados</div>
@@ -234,18 +225,14 @@
         />
 
         <!-- Modal para crear un nuevo tractor -->
-        <TractorCreate
-            v-if="showCreateTractorForm"
-            @close="showCreateTractorForm = false"
-            @created="handleTractorCreated"
-        />
+        <TractorCreate v-if="showCreateTractorForm" @close="showCreateTractorForm = false" @created="handleTractorCreated" />
 
         <!-- Modal para mostrar detalles del anuncio -->
         <ListingShow
             v-if="selectedListing"
             :listing="selectedListing"
             @close="selectedListing = null"
-            @edit="editListing"
+            @edit="startEditingListing"
             @delete="confirmDeleteListing"
             @toggle-status="toggleListingStatus"
             @view-request="showRequestDetails"
@@ -291,12 +278,12 @@ import ListingCreate from '@/Components/User/ListingCreate.vue';
 import ListingShow from '@/Components/User/ListingShow.vue';
 import RequestCreate from '@/Components/User/RequestCreate.vue';
 import RequestShow from '@/Components/User/RequestShow.vue';
-import TractorShow from '@/Components/User/TractorShow.vue';
 import TractorCreate from '@/Components/User/TractorCreate.vue';
+import TractorShow from '@/Components/User/TractorShow.vue';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 
 // Propiedades del componente
 const props = defineProps({
@@ -305,13 +292,14 @@ const props = defineProps({
     userRequests: Array,
     availableListings: {
         type: Array,
-        default: () => []
-    }
+        default: () => [],
+    },
 });
 
 // Estados para los modales y selecciones
 const selectedTractor = ref(null);
 const selectedListing = ref(null);
+const isEditingListing = ref(false);
 const selectedRequest = ref(null);
 const showCreateTractorForm = ref(false);
 const showCreateListingForm = ref(false);
@@ -366,30 +354,42 @@ const confirmDeleteTractor = (tractor) => {
     itemToDelete.value = { type: 'tractor', item: tractor };
 };
 
-// Funciones para mostrar detalles de anuncios
+// Funciones para mostrar y editar anuncios
 const showListingDetails = (listing) => {
-    // Cargar los datos completos si es necesario
-    if (!listing.tractor || !listing.requests) {
-        axios.get(route('user.listings.show', listing.id))
-            .then(response => {
-                selectedListing.value = response.data.props.listing;
-            })
-            .catch(error => {
-                console.error('Error al cargar detalles del anuncio:', error);
-            });
-    } else {
-        selectedListing.value = listing;
-    }
+  // Cargar los datos completos del anuncio
+  axios.get(route('user.listings.show', listing.id))
+    .then(response => {
+      // Dependiendo de cómo se estructuren los datos en la respuesta
+      if (response.data.listing) {
+        selectedListing.value = response.data.listing;
+      } else if (response.data.props && response.data.props.listing) {
+        selectedListing.value = response.data.props.listing;
+      } else {
+        // Si los datos vienen directamente
+        selectedListing.value = response.data;
+      }
+      console.log('Datos del anuncio cargados:', selectedListing.value);
+    })
+    .catch(error => {
+      console.error('Error al cargar detalles del anuncio:', error);
+    });
 };
+
+const startEditingListing = (listing) => {
+  isEditingListing.value = true;
+  // No es necesario cerrar el modal actual, solo indicar que está en modo edición
+};
+
 
 const showRequestDetails = (request) => {
     // Cargar los datos completos si es necesario
     if (!request.listing) {
-        axios.get(route('user.requests.show', request.id))
-            .then(response => {
+        axios
+            .get(route('user.requests.show', request.id))
+            .then((response) => {
                 selectedRequest.value = response.data.props.request;
             })
-            .catch(error => {
+            .catch((error) => {
                 console.error('Error al cargar detalles de la solicitud:', error);
             });
     } else {
@@ -408,21 +408,11 @@ const confirmDeleteListing = (listing) => {
     itemToDelete.value = { type: 'listing', item: listing };
 };
 
-const toggleListingStatus = (listing) => {
-    axios.put(route('user.listings.toggle-status', listing.id))
-        .then(response => {
-            // Actualizar el estado del anuncio localmente
-            listing.is_active = !listing.is_active;
-        })
-        .catch(error => {
-            console.error('Error al cambiar el estado del anuncio:', error);
-        });
-};
-
 // Funciones para gestionar solicitudes
 const cancelRequest = (request) => {
-    axios.patch(route('user.requests.cancel', request.id))
-        .then(response => {
+    axios
+        .patch(route('user.requests.cancel', request.id))
+        .then((response) => {
             // Actualizar el estado de la solicitud localmente
             request.status = 'cancelled';
             selectedRequest.value = null;
@@ -433,38 +423,8 @@ const cancelRequest = (request) => {
                 props.userRequests[index].status = 'cancelled';
             }
         })
-        .catch(error => {
+        .catch((error) => {
             console.error('Error al cancelar la solicitud:', error);
-        });
-};
-
-const acceptRequest = (request) => {
-    axios.put(route('user.requests.accept', request.id))
-        .then(response => {
-            request.status = 'accepted';
-        })
-        .catch(error => {
-            console.error('Error al aceptar la solicitud:', error);
-        });
-};
-
-const rejectRequest = (request) => {
-    axios.put(route('user.requests.reject', request.id))
-        .then(response => {
-            request.status = 'rejected';
-        })
-        .catch(error => {
-            console.error('Error al rechazar la solicitud:', error);
-        });
-};
-
-const completeRequest = (request) => {
-    axios.put(route('user.requests.complete', request.id))
-        .then(response => {
-            request.status = 'completed';
-        })
-        .catch(error => {
-            console.error('Error al completar la solicitud:', error);
         });
 };
 
@@ -490,56 +450,87 @@ const handleRequestCreated = () => {
     router.reload();
 };
 
-// Funciones para eliminar elementos
+const cancelDelete = () => {
+    itemToDelete.value = null;
+};
+
+// Función para eliminar elementos con recarga automática
 const deleteConfirmed = () => {
     if (itemToDelete.value.type === 'tractor') {
         const tractor = itemToDelete.value.item;
-        axios.delete(route('user.tractors.destroy', tractor.id))
-            .then(response => {
-                const index = props.userTractors.findIndex((t) => t.id === tractor.id);
-                if (index !== -1) {
-                    props.userTractors.splice(index, 1);
-                }
+        router.delete(route('user.tractors.destroy', tractor.id), {
+            onSuccess: () => {
                 router.reload();
-            })
-            .catch(error => {
-                console.error('Error al eliminar el tractor:', error);
-            });
+            },
+        });
     } else if (itemToDelete.value.type === 'listing') {
         const listing = itemToDelete.value.item;
-        axios.delete(route('user.listings.destroy', listing.id))
-            .then(response => {
-                // Actualizar la lista de anuncios
-                const index = props.userListings.findIndex((l) => l.id === listing.id);
-                if (index !== -1) {
-                    props.userListings.splice(index, 1);
-                }
+        router.delete(route('user.listings.destroy', listing.id), {
+            onSuccess: () => {
                 router.reload();
-            })
-            .catch(error => {
-                console.error('Error al eliminar el anuncio:', error);
-            });
+            },
+        });
     } else if (itemToDelete.value.type === 'request') {
         const request = itemToDelete.value.item;
-        axios.delete(route('user.requests.destroy', request.id))
-            .then(response => {
-                // Actualizar la lista de solicitudes
-                const index = props.userRequests.findIndex((r) => r.id === request.id);
-                if (index !== -1) {
-                    props.userRequests.splice(index, 1);
-                }
+        router.delete(route('user.requests.destroy', request.id), {
+            onSuccess: () => {
                 router.reload();
-            })
-            .catch(error => {
-                console.error('Error al eliminar la solicitud:', error);
-            });
+            },
+        });
     }
 
     // Cerrar el modal de confirmación
     itemToDelete.value = null;
 };
 
-const cancelDelete = () => {
-    itemToDelete.value = null;
+// Función para cambiar el estado del anuncio
+const toggleListingStatus = (listing) => {
+    router.put(
+        route('user.listings.toggle-status', listing.id),
+        {},
+        {
+            onSuccess: () => {
+                // Recargar para ver los cambios
+                router.reload();
+            },
+        },
+    );
+};
+
+// Funciones para gestionar solicitudes
+const acceptRequest = (request) => {
+    router.put(
+        route('user.requests.accept', request.id),
+        {},
+        {
+            onSuccess: () => {
+                router.reload();
+            },
+        },
+    );
+};
+
+const rejectRequest = (request) => {
+    router.put(
+        route('user.requests.reject', request.id),
+        {},
+        {
+            onSuccess: () => {
+                router.reload();
+            },
+        },
+    );
+};
+
+const completeRequest = (request) => {
+    router.put(
+        route('user.requests.complete', request.id),
+        {},
+        {
+            onSuccess: () => {
+                router.reload();
+            },
+        },
+    );
 };
 </script>

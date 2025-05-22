@@ -117,8 +117,9 @@
   </div>
 </template>
 
+<!-- resources/js/components/User/TractorCreate.vue -->
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3';
+import { useForm, router } from '@inertiajs/vue3';
 
 defineEmits(['close', 'created']);
 
@@ -137,7 +138,8 @@ const submitForm = () => {
     onSuccess: () => {
       form.reset();
       form.clearErrors();
-      emit('created');
+      // Recargar la página para actualizar la lista de tractores
+      router.reload();
     },
     onError: (errors) => {
       console.error('Error al crear el tractor:', errors);
