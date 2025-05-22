@@ -97,6 +97,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 abort(403, 'No tienes permiso para ver este tractor.');
             }
 
+            // Cargar aperos conectados con información de pivot
+            $tractor->load(['aperos' => function ($query) {
+                $query->withPivot('attached_at', 'detached_at');
+            }]);
+
             return Inertia::render('User/Tractors/Show', [
                 'tractor' => $tractor
             ]);
@@ -145,6 +150,133 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return redirect()->route('user.dashboard')
                 ->with('message', 'Tractor eliminado correctamente.');
         })->name('tractors.destroy');
+
+        // Rutas para aperos de usuario
+        Route::get('aperos', function () {
+            $user = auth()->user();
+            
+            // Obtener aperos del usuario a través de la relación con tractores
+            $aperos = \App\Models\Apero::whereHas('tractors', function ($query) use ($user) {
+                $query->whereHas('owners', function ($ownerQuery) use ($user) {
+                    $ownerQuery->where('user_id', $user->id);
+                });
+            })->with(['tractors' => function ($query) use ($user) {
+                $query->whereHas('owners', function ($ownerQuery) use ($user) {
+                    $ownerQuery->where('user_id', $user->id);
+                });
+            }])->get();
+
+            return Inertia::render('User/Aperos/Index', [
+                'aperos' => $aperos
+            ]);
+        })->name('aperos.index');
+
+        Route::get('aperos/{apero}', function (App\Models\Apero $apero) {
+            $user = auth()->user();
+            
+            // Verificar que el usuario tiene acceso a este apero a través de sus tractores
+            $hasAccess = $apero->tractors()->whereHas('owners', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })->exists();
+
+            if (!$hasAccess) {
+                abort(403, 'No tienes permiso para ver este apero.');
+            }
+
+            $apero->load(['tractors' => function ($query) use ($user) {
+                $query->whereHas('owners', function ($ownerQuery) use ($user) {
+                    $ownerQuery->where('user_id', $user->id);
+                });
+            }]);
+
+            return Inertia::render('User/Aperos/Show', [
+                'apero' => $apero
+            ]);
+        })->name('aperos.show');
+
+        // API para obtener aperos disponibles para un tractor
+        Route::get('aperos/available-for-tractor/{tractor}', function (App\Models\Tractor $tractor) {
+            $user = auth()->user();
+            
+            // Verificar que el usuario es propietario del tractor
+            if (!$tractor->owners()->where('user_id', $user->id)->exists()) {
+                abort(403, 'No tienes permiso para ver este tractor.');
+            }
+
+            // Obtener aperos que no están conectados a este tractor
+            $connectedAperoIds = $tractor->aperos()
+                ->wherePivot('detached_at', null)
+                ->pluck('aperos.id');
+
+            $availableAperos = \App\Models\Apero::where('is_available', true)
+                ->whereNotIn('id', $connectedAperoIds)
+                ->get();
+
+            return response()->json([
+                'aperos' => $availableAperos
+            ]);
+        })->name('aperos.available-for-tractor');
+
+        // Ruta para conectar/desconectar aperos a tractores del usuario
+        Route::post('tractors/{tractor}/attach-apero', function (App\Models\Tractor $tractor, Illuminate\Http\Request $request) {
+            // Verificar que el usuario es propietario del tractor
+            if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
+                abort(403, 'No tienes permiso para modificar este tractor.');
+            }
+
+            $validated = $request->validate([
+                'apero_id' => ['required', 'exists:aperos,id']
+            ]);
+
+            $apero = \App\Models\Apero::find($validated['apero_id']);
+
+            // Verificar si el apero está disponible
+            if (!$apero->is_available) {
+                return back()->with('error', 'El apero seleccionado no está disponible.');
+            }
+
+            // Verificar si el apero ya está conectado a este tractor
+            $existingConnection = $tractor->aperos()
+                ->where('apero_id', $validated['apero_id'])
+                ->wherePivot('detached_at', null)
+                ->exists();
+
+            if ($existingConnection) {
+                return back()->with('error', 'El apero ya está conectado a este tractor.');
+            }
+
+            // Conectar el apero
+            $tractor->aperos()->attach($validated['apero_id'], [
+                'attached_at' => now(),
+                'detached_at' => null,
+            ]);
+            
+            return back()->with('message', 'Apero conectado al tractor correctamente.');
+        })->name('tractors.attach-apero');
+
+        Route::delete('tractors/{tractor}/detach-apero/{apero}', function (App\Models\Tractor $tractor, App\Models\Apero $apero) {
+            // Verificar que el usuario es propietario del tractor
+            if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
+                abort(403, 'No tienes permiso para modificar este tractor.');
+            }
+
+            // Buscar la relación pivot activa
+            $pivotRecord = $tractor->aperos()
+                ->where('apero_id', $apero->id)
+                ->wherePivot('detached_at', null)
+                ->first();
+
+            if (!$pivotRecord) {
+                return back()->with('error', 'El apero no está conectado a este tractor.');
+            }
+
+            // Actualizar la fecha de desconexión en lugar de eliminar la relación
+            $tractor->aperos()->updateExistingPivot($apero->id, [
+                'detached_at' => now(),
+            ]);
+            
+            return back()->with('message', 'Apero desconectado del tractor correctamente.');
+        })->name('tractors.detach-apero');
 
         // Rutas de anuncios
         Route::get('listings', [ListingController::class, 'index'])->name('listings.index');
