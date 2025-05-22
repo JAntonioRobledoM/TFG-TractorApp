@@ -1,4 +1,4 @@
-<!-- resources/js/Components/User/TractorShow.vue -->
+<!-- resources/js/components/User/TractorShow.vue -->
 <template>
   <div class="fixed inset-0 bg-gray-800 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex items-center justify-center px-4">
     <div class="bg-white shadow-lg rounded-lg overflow-hidden max-w-3xl w-full mx-auto">
@@ -15,7 +15,7 @@
           </svg>
         </button>
       </div>
-      <div class="p-6 space-y-6">
+      <div v-if="!isEditing" class="p-6 space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <h3 class="text-2xl font-bold text-gray-800">{{ tractor.brand }} {{ tractor.model }}</h3>
@@ -45,7 +45,7 @@
         </div>
         <div class="flex space-x-3 pt-4 border-t border-gray-100">
           <button 
-            @click="$emit('edit', tractor)" 
+            @click="toggleEdit" 
             class="flex-1 py-2 bg-green-600 text-white hover:bg-green-700 rounded-md transition duration-200 flex items-center justify-center"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -62,18 +62,160 @@
             </svg>
             Eliminar
           </button>
-        </div>
+          </div>
+      </div>
+      
+      <!-- Formulario de edición -->
+      <div v-else class="p-6 space-y-4">
+        <form @submit.prevent="updateTractor">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <label for="brand" class="block text-sm font-medium text-gray-700 mb-1">Marca</label>
+              <input 
+                type="text" 
+                id="brand" 
+                v-model="editForm.brand" 
+                class="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+              >
+            </div>
+            <div>
+              <label for="model" class="block text-sm font-medium text-gray-700 mb-1">Modelo</label>
+              <input 
+                type="text" 
+                id="model" 
+                v-model="editForm.model" 
+                class="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+              >
+            </div>
+            <div>
+              <label for="year" class="block text-sm font-medium text-gray-700 mb-1">Año</label>
+              <input 
+                type="number" 
+                id="year" 
+                v-model="editForm.year" 
+                class="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+              >
+            </div>
+            <div>
+              <label for="horsepower" class="block text-sm font-medium text-gray-700 mb-1">Potencia (CV)</label>
+              <input 
+                type="number" 
+                id="horsepower" 
+                v-model="editForm.horsepower" 
+                class="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+              >
+            </div>
+            <div>
+              <label for="working_hours" class="block text-sm font-medium text-gray-700 mb-1">Horas de uso</label>
+              <input 
+                type="number" 
+                id="working_hours" 
+                v-model="editForm.working_hours" 
+                step="0.01"
+                class="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+              >
+            </div>
+            <div class="flex items-center">
+              <input 
+                type="checkbox" 
+                id="is_available" 
+                v-model="editForm.is_available" 
+                class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+              >
+              <label for="is_available" class="ml-2 block text-sm text-gray-700">
+                Disponible
+              </label>
+            </div>
+          </div>
+          
+          <div>
+            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+            <textarea 
+              id="description" 
+              v-model="editForm.description" 
+              rows="4" 
+              class="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+            ></textarea>
+          </div>
+          
+          <div class="flex space-x-3 pt-4 border-t border-gray-100 mt-6">
+            <button 
+              type="button"
+              @click="toggleEdit" 
+              class="flex-1 py-2 bg-gray-300 text-gray-700 hover:bg-gray-400 rounded-md transition duration-200 flex items-center justify-center"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              class="flex-1 py-2 bg-green-600 text-white hover:bg-green-700 rounded-md transition duration-200 flex items-center justify-center"
+              :disabled="isUpdating"
+            >
+              {{ isUpdating ? 'Guardando...' : 'Guardar Cambios' }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-defineProps({
+<script setup>
+import { ref, reactive } from 'vue';
+import { router } from '@inertiajs/vue3';
+
+const props = defineProps({
   tractor: {
     type: Object,
     required: true
   }
 });
-defineEmits(['close', 'edit', 'delete']);
+
+defineEmits(['close', 'delete']);
+
+const isEditing = ref(false);
+const isUpdating = ref(false);
+
+// Inicializar formulario de edición
+const editForm = reactive({
+  brand: props.tractor.brand || '',
+  model: props.tractor.model || '',
+  year: props.tractor.year || null,
+  description: props.tractor.description || '',
+  horsepower: props.tractor.horsepower || null,
+  working_hours: props.tractor.working_hours || null,
+  is_available: props.tractor.is_available !== undefined ? props.tractor.is_available : true,
+});
+
+function toggleEdit() {
+  isEditing.value = !isEditing.value;
+  
+  // Si se está cancelando la edición, reiniciar el formulario
+  if (!isEditing.value) {
+    editForm.brand = props.tractor.brand || '';
+    editForm.model = props.tractor.model || '';
+    editForm.year = props.tractor.year || null;
+    editForm.description = props.tractor.description || '';
+    editForm.horsepower = props.tractor.horsepower || null;
+    editForm.working_hours = props.tractor.working_hours || null;
+    editForm.is_available = props.tractor.is_available !== undefined ? props.tractor.is_available : true;
+  }
+}
+
+function updateTractor() {
+  isUpdating.value = true;
+  
+  router.put(route('user.tractors.update', props.tractor.id), editForm, {
+    onSuccess: () => {
+      isUpdating.value = false;
+      isEditing.value = false;
+      // Emitir un evento para cerrar el modal y actualizar datos
+      router.reload();
+    },
+    onError: (errors) => {
+      isUpdating.value = false;
+      console.error('Error al actualizar el tractor:', errors);
+    }
+  });
+}
 </script>

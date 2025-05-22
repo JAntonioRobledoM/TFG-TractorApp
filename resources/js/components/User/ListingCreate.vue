@@ -172,9 +172,10 @@
   </div>
 </template>
 
+<!-- resources/js/components/User/ListingCreate.vue -->
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { useForm, router } from '@inertiajs/vue3';
 
 const props = defineProps({
   userTractors: {
@@ -207,13 +208,8 @@ const submitForm = () => {
   
   form.post(route('user.listings.store'), {
     onSuccess: () => {
-      // Emitir evento para informar que se ha creado el anuncio
-      // y permitir actualizar la lista en el dashboard
-      form.reset();
-      form.clearErrors();
-      // Notificar al componente padre que se ha creado un anuncio
-      // para que pueda actualizar la lista o tomar otras acciones
-      emit('created');
+      // Recargar la página para actualizar la lista de anuncios
+      router.reload();
     },
     onError: (errors) => {
       // Las validaciones del backend se manejan automáticamente

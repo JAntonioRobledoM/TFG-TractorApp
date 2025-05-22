@@ -128,6 +128,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->with('message', 'Tractor creado correctamente.');
         })->name('tractors.store');
 
+        // Nueva ruta para editar tractores
+        Route::put('tractors/{tractor}', function (Illuminate\Http\Request $request, App\Models\Tractor $tractor) {
+            // Verificar que el usuario es propietario del tractor
+            if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
+                abort(403, 'No tienes permiso para editar este tractor.');
+            }
+
+            $validated = $request->validate([
+                'brand' => ['nullable', 'string', 'max:255'],
+                'model' => ['nullable', 'string', 'max:255'],
+                'year' => ['nullable', 'integer'],
+                'description' => ['nullable', 'string'],
+                'horsepower' => ['nullable', 'integer'],
+                'working_hours' => ['nullable', 'numeric'],
+                'is_available' => ['boolean'],
+            ]);
+
+            $tractor->update($validated);
+
+            return redirect()->route('user.dashboard')
+                ->with('message', 'Tractor actualizado correctamente.');
+        })->name('tractors.update');
+
         Route::delete('tractors/{tractor}', function (App\Models\Tractor $tractor) {
             // Verificar que el usuario es propietario del tractor
             if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
@@ -317,9 +340,83 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->with('message', 'Anuncio creado correctamente.');
         })->name('listings.store');
 
+        // Nueva ruta para editar anuncios
+        Route::put('listings/{listing}', function (Illuminate\Http\Request $request, App\Models\Listing $listing) {
+            // Verificar que el usuario es propietario del anuncio
+            if ($listing->seller_id !== auth()->id()) {
+                abort(403, 'No tienes permiso para modificar este anuncio.');
+            }
+
+            $validated = $request->validate([
+                'tractor_id' => ['required', 'exists:tractors,id'],
+                'type' => ['required', 'string', 'in:sale,rental'],
+                'price' => ['required', 'numeric', 'min:0'],
+                'description' => ['nullable', 'string'],
+                'is_active' => ['boolean'],
+                'start_date' => ['nullable', 'date', 'required_if:type,rental'],
+                'end_date' => ['nullable', 'date', 'required_if:type,rental', 'after_or_equal:start_date'],
+            ]);
+
+            // Verificar que el usuario es propietario del tractor
+            $tractor = \App\Models\Tractor::find($validated['tractor_id']);
+            if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
+                return back()->withErrors(['tractor_id' => 'No tienes permiso para usar este tractor.']);
+            }
+
+            $listing->update($validated);
+
+            return back()->with('message', 'Anuncio actualizado correctamente.');
+        })->name('listings.update');
+
         // Rutas de solicitudes
         Route::get('requests', [RequestController::class, 'index'])->name('requests.index');
-        Route::post('requests', [RequestController::class, 'store'])->name('requests.store');
+
+        // Modificada la ruta para crear solicitudes (corregido el error con el campo 'type')
+        Route::post('requests', function (Illuminate\Http\Request $request) {
+            $validated = $request->validate([
+                'listing_id' => ['required', 'exists:listings,id'],
+                'message' => ['nullable', 'string'],
+                'offered_price' => ['nullable', 'numeric', 'min:0'],
+            ]);
+
+            // Obtener el listing para determinar el tipo
+            $listing = \App\Models\Listing::findOrFail($validated['listing_id']);
+
+            // Check if the user is trying to request their own listing
+            if ($listing->seller_id === auth()->id()) {
+                return back()->with('error', 'No puedes solicitar tu propio anuncio.');
+            }
+
+            // Check if the user already has a request for this listing
+            $existingRequest = \App\Models\Request::where('requester_id', auth()->id())
+                ->where('listing_id', $validated['listing_id'])
+                ->first();
+
+            if ($existingRequest) {
+                return back()->with('error', 'Ya has enviado una solicitud para este anuncio.');
+            }
+
+            // Si no se proporciona el precio ofrecido, usar el precio del anuncio
+            if (!isset($validated['offered_price']) || $validated['offered_price'] == '') {
+                $validated['offered_price'] = $listing->price;
+            }
+
+            // Crear la solicitud
+            $newRequest = \App\Models\Request::create([
+                'requester_id' => auth()->id(),
+                'listing_id' => $validated['listing_id'],
+                'message' => $validated['message'] ?? null,
+                'type' => $listing->type, // Usar el mismo tipo que el anuncio (sale o rental)
+                'status' => 'pending',
+                'offered_price' => $validated['offered_price'],
+                // Para solicitudes de alquiler, usar las fechas del anuncio por defecto
+                'requested_start_date' => $listing->type === 'rental' ? $listing->start_date : null,
+                'requested_end_date' => $listing->type === 'rental' ? $listing->end_date : null,
+            ]);
+
+            return back()->with('message', 'Solicitud enviada correctamente.');
+        })->name('requests.store');
+
         Route::get('requests/{request}', [RequestController::class, 'show'])->name('requests.show');
         Route::patch('requests/{request}/cancel', [RequestController::class, 'cancel'])->name('requests.cancel');
 
