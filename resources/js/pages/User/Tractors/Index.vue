@@ -336,10 +336,21 @@ const createTractor = () => {
 };
 
 const deleteTractor = (tractor) => {
-  if (confirm(`¿Estás seguro de que quieres eliminar el tractor "${tractor.brand || 'Tractor'} ${tractor.model || `#${tractor.id}`}"?`)) {
+  const tractorName = `${tractor.brand || 'Tractor'} ${tractor.model || `#${tractor.id}`}`;
+  
+  if (confirm(`¿Estás seguro de que quieres eliminar el tractor "${tractorName}"? Esta acción no se puede deshacer.`)) {
     router.delete(route('user.tractors.destroy', tractor.id), {
+      preserveScroll: true,
+      onSuccess: (page) => {
+        // La página se recarga automáticamente con Inertia
+        console.log('Tractor eliminado exitosamente');
+      },
       onError: (errors) => {
         console.error('Error al eliminar tractor:', errors);
+        // Los errores se muestran automáticamente a través de flash messages
+      },
+      onFinish: () => {
+        console.log('Operación de eliminación finalizada');
       }
     });
   }

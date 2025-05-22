@@ -451,10 +451,16 @@ const disconnectApero = (apero: any) => {
 
 const deleteTractor = () => {
   const tractorName = `${props.tractor.brand || 'Tractor'} ${props.tractor.model || `#${props.tractor.id}`}`;
-  if (confirm(`¿Estás seguro de que quieres eliminar el tractor "${tractorName}"?`)) {
+  
+  if (confirm(`¿Estás seguro de que quieres eliminar el tractor "${tractorName}"? Esta acción no se puede deshacer.`)) {
     router.delete(route('user.tractors.destroy', props.tractor.id), {
       onSuccess: () => {
-        router.visit(route('user.tractors.index'));
+        // Redirigir a la lista de tractores después de eliminar
+        router.visit(route('user.tractors.index'), {
+          onFinish: () => {
+            console.log('Redirigido a lista de tractores');
+          }
+        });
       },
       onError: (errors) => {
         console.error('Error al eliminar tractor:', errors);

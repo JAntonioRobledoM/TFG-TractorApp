@@ -199,22 +199,47 @@ const form = useForm({
 
 // Enviar formulario
 const submitForm = () => {
-  // Validación adicional
+  // Limpiar errores previos
+  form.clearErrors();
+  
+  // Validación adicional en el frontend
+  if (!form.tractor_id) {
+    form.errors.tractor_id = 'Debes seleccionar un tractor';
+    return;
+  }
+  
+  if (!form.price || form.price <= 0) {
+    form.errors.price = 'El precio debe ser mayor a 0';
+    return;
+  }
+  
   if (form.type === 'rental' && (!form.start_date || !form.end_date)) {
     if (!form.start_date) form.errors.start_date = 'La fecha de inicio es obligatoria para alquileres';
     if (!form.end_date) form.errors.end_date = 'La fecha de fin es obligatoria para alquileres';
     return;
   }
   
+  console.log('Enviando datos del anuncio:', {
+    tractor_id: form.tractor_id,
+    type: form.type,
+    price: form.price,
+    description: form.description,
+    is_active: form.is_active,
+    start_date: form.start_date,
+    end_date: form.end_date,
+  });
+  
   form.post(route('user.listings.store'), {
-    onSuccess: () => {
+    onSuccess: (page) => {
+      console.log('Anuncio creado exitosamente');
+      // Cerrar el modal
+      emit('close');
       // Recargar la página para actualizar la lista de anuncios
       router.reload();
     },
     onError: (errors) => {
-      // Las validaciones del backend se manejan automáticamente
-      // pero podemos agregar lógica adicional si es necesario
       console.error('Error al crear el anuncio:', errors);
+      // Los errores se muestran automáticamente en el formulario
     }
   });
 };

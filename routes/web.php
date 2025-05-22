@@ -39,21 +39,229 @@ Route::get('listings/rentals', [AdminListingController::class, 'rentals'])->name
 // Dashboard para usuarios normales (accesible a todos los usuarios autenticados)
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard para usuarios normales
-    Route::get('user/dashboard', function () {
-        $user = auth()->user();
-        $availableListings = ListingModel::with(['tractor', 'seller'])
-            ->where('is_active', true)
-            ->where('seller_id', '!=', $user->id)
-            ->latest()
-            ->get();
+Route::get('user/dashboard', function () {
+    $user = auth()->user();
+    
+    // Cargar anuncios disponibles con todas las relaciones necesarias
+    $availableListings = ListingModel::with(['tractor.owners', 'seller'])
+        ->where('is_active', true)
+        ->where('seller_id', '!=', $user->id)
+        ->latest()
+        ->get();
 
-        return Inertia::render('User/Dashboard', [
-            'userTractors' => $user->tractors()->latest()->take(5)->get(),
-            'userListings' => $user->listings()->with(['tractor'])->latest()->take(5)->get(),
-            'userRequests' => $user->requests()->with(['listing.tractor'])->latest()->take(5)->get(),
-            'availableListings' => $availableListings
+    // Obtener solicitudes recibidas en mis anuncios
+    $receivedRequests = RequestModel::whereHas('listing', function($query) use ($user) {
+            $query->where('seller_id', $user->id);
+        })
+        ->with(['listing.tractor', 'requester'])
+        ->latest()
+        ->take(10) // Limitar a las 10 más recientes
+        ->get()
+        ->map(function ($request) {
+            return [
+                'id' => $request->id,
+                'type' => $request->type,
+                'status' => $request->status,
+                'offered_price' => $request->offered_price,
+                'message' => $request->message,
+                'created_at' => $request->created_at,
+                'listing_id' => $request->listing_id,
+                'requester_id' => $request->requester_id,
+                'listing' => $request->listing ? [
+                    'id' => $request->listing->id,
+                    'type' => $request->listing->type,
+                    'price' => $request->listing->price,
+                    'tractor' => $request->listing->tractor ? [
+                        'id' => $request->listing->tractor->id,
+                        'brand' => $request->listing->tractor->brand,
+                        'model' => $request->listing->tractor->model,
+                    ] : null,
+                ] : null,
+                'requester' => $request->requester ? [
+                    'id' => $request->requester->id,
+                    'first_name' => $request->requester->first_name,
+                    'last_name' => $request->requester->last_name,
+                ] : null,
+            ];
+        });
+
+    return Inertia::render('User/Dashboard', [
+        // Cargar tractores con información completa
+        'userTractors' => $user->tractors()
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function ($tractor) {
+                return [
+                    'id' => $tractor->id,
+                    'brand' => $tractor->brand,
+                    'model' => $tractor->model,
+                    'year' => $tractor->year,
+                    'horsepower' => $tractor->horsepower,
+                    'working_hours' => $tractor->working_hours,
+                    'is_available' => $tractor->is_available,
+                    'description' => $tractor->description,
+                ];
+            }),
+        
+        // Cargar anuncios con información completa del tractor y vendedor
+        'userListings' => $user->listings()
+            ->with(['tractor'])
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function ($listing) {
+                return [
+                    'id' => $listing->id,
+                    'type' => $listing->type,
+                    'price' => $listing->price,
+                    'description' => $listing->description,
+                    'is_active' => $listing->is_active,
+                    'start_date' => $listing->start_date,
+                    'end_date' => $listing->end_date,
+                    'created_at' => $listing->created_at,
+                    'tractor' => $listing->tractor ? [
+                        'id' => $listing->tractor->id,
+                        'brand' => $listing->tractor->brand,
+                        'model' => $listing->tractor->model,
+                        'year' => $listing->tractor->year,
+                        'horsepower' => $listing->tractor->horsepower,
+                    ] : null,
+                    // Cargar solicitudes recibidas para este anuncio
+                    'requests' => $listing->requests()
+                        ->with('requester')
+                        ->latest()
+                        ->get()
+                        ->map(function ($request) {
+                            return [
+                                'id' => $request->id,
+                                'status' => $request->status,
+                                'offered_price' => $request->offered_price,
+                                'created_at' => $request->created_at,
+                                'requester' => $request->requester ? [
+                                    'id' => $request->requester->id,
+                                    'first_name' => $request->requester->first_name,
+                                    'last_name' => $request->requester->last_name,
+                                ] : null,
+                            ];
+                        }),
+                ];
+            }),
+        
+        // Cargar solicitudes con información completa (las que YO he enviado)
+        'userRequests' => $user->requests()
+            ->with(['listing.tractor', 'listing.seller'])
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function ($request) {
+                return [
+                    'id' => $request->id,
+                    'type' => $request->type ?? $request->listing->type,
+                    'status' => $request->status,
+                    'offered_price' => $request->offered_price,
+                    'message' => $request->message,
+                    'created_at' => $request->created_at,
+                    'listing_id' => $request->listing_id,
+                    'listing' => $request->listing ? [
+                        'id' => $request->listing->id,
+                        'type' => $request->listing->type,
+                        'price' => $request->listing->price,
+                        'tractor' => $request->listing->tractor ? [
+                            'id' => $request->listing->tractor->id,
+                            'brand' => $request->listing->tractor->brand,
+                            'model' => $request->listing->tractor->model,
+                        ] : null,
+                        'seller' => $request->listing->seller ? [
+                            'id' => $request->listing->seller->id,
+                            'first_name' => $request->listing->seller->first_name,
+                            'last_name' => $request->listing->seller->last_name,
+                        ] : null,
+                    ] : null,
+                ];
+            }),
+        
+        // NUEVA PROPIEDAD: Solicitudes recibidas en mis anuncios
+        'receivedRequests' => $receivedRequests,
+        
+        'availableListings' => $availableListings->map(function ($listing) {
+            return [
+                'id' => $listing->id,
+                'type' => $listing->type,
+                'price' => $listing->price,
+                'description' => $listing->description,
+                'is_active' => $listing->is_active,
+                'start_date' => $listing->start_date,
+                'end_date' => $listing->end_date,
+                'tractor' => $listing->tractor ? [
+                    'id' => $listing->tractor->id,
+                    'brand' => $listing->tractor->brand,
+                    'model' => $listing->tractor->model,
+                    'year' => $listing->tractor->year,
+                ] : null,
+                'seller' => $listing->seller ? [
+                    'id' => $listing->seller->id,
+                    'first_name' => $listing->seller->first_name,
+                    'last_name' => $listing->seller->last_name,
+                ] : null,
+            ];
+        })
+    ]);
+})->name('user.dashboard');
+
+    // Ruta adicional para obtener detalles completos de un anuncio
+    Route::get('user/listings/{listing}/details', function (App\Models\Listing $listing) {
+        // Verificar que el usuario es propietario del anuncio
+        if ($listing->seller_id !== auth()->id()) {
+            abort(403, 'No tienes permiso para ver este anuncio.');
+        }
+
+        // Cargar todas las relaciones necesarias
+        $listing->load([
+            'tractor',
+            'requests' => function($query) {
+                $query->with('requester')->latest();
+            }
         ]);
-    })->name('user.dashboard');
+
+        return response()->json([
+            'listing' => [
+                'id' => $listing->id,
+                'type' => $listing->type,
+                'price' => $listing->price,
+                'description' => $listing->description,
+                'is_active' => $listing->is_active,
+                'start_date' => $listing->start_date,
+                'end_date' => $listing->end_date,
+                'created_at' => $listing->created_at,
+                'tractor_id' => $listing->tractor_id,
+                'tractor' => $listing->tractor ? [
+                    'id' => $listing->tractor->id,
+                    'brand' => $listing->tractor->brand,
+                    'model' => $listing->tractor->model,
+                    'year' => $listing->tractor->year,
+                    'horsepower' => $listing->tractor->horsepower,
+                    'working_hours' => $listing->tractor->working_hours,
+                    'description' => $listing->tractor->description,
+                ] : null,
+                'requests' => $listing->requests->map(function ($request) {
+                    return [
+                        'id' => $request->id,
+                        'status' => $request->status,
+                        'offered_price' => $request->offered_price,
+                        'message' => $request->message,
+                        'created_at' => $request->created_at,
+                        'requester_id' => $request->requester_id,
+                        'requester' => $request->requester ? [
+                            'id' => $request->requester->id,
+                            'first_name' => $request->requester->first_name,
+                            'last_name' => $request->requester->last_name,
+                        ] : null,
+                    ];
+                }),
+            ]
+        ]);
+    })->name('user.listings.details');
 
     // API para obtener anuncios disponibles
     Route::get('user/api/available-listings', function () {
@@ -157,21 +365,43 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 abort(403, 'No tienes permiso para eliminar este tractor.');
             }
 
-            // Verificar si el tractor está siendo usado en algún anuncio activo
-            if ($tractor->listings()->where('is_active', true)->exists()) {
-                return back()->with('error', 'No puedes eliminar este tractor porque está siendo usado en anuncios activos.');
+            try {
+                // 1. Verificar si el tractor está siendo usado en algún anuncio activo
+                $activeListings = $tractor->listings()->where('is_active', true)->count();
+                if ($activeListings > 0) {
+                    return back()->with('error', 'No puedes eliminar este tractor porque está siendo usado en anuncios activos.');
+                }
+
+                // 2. Eliminar primero todas las relaciones del usuario actual
+                $tractor->owners()->detach(auth()->id());
+
+                // 3. Si no hay más propietarios, eliminar todas las relaciones y el tractor
+                if ($tractor->owners()->count() === 0) {
+                    // Eliminar relaciones con aperos (opcional: solo marcar como desconectado)
+                    if ($tractor->aperos()->count() > 0) {
+                        $aperoIds = $tractor->aperos()->pluck('aperos.id');
+                        foreach ($aperoIds as $aperoId) {
+                            $tractor->aperos()->updateExistingPivot($aperoId, ['detached_at' => now()]);
+                        }
+                    }
+                    
+                    // Eliminar anuncios inactivos relacionados
+                    $tractor->listings()->where('is_active', false)->delete();
+                    
+                    // Finalmente eliminar el tractor
+                    $tractor->delete();
+                    
+                    return redirect()->route('user.tractors.index')
+                        ->with('message', 'Tractor eliminado completamente.');
+                }
+
+                return redirect()->route('user.tractors.index')
+                    ->with('message', 'Tu relación con el tractor ha sido eliminada.');
+                    
+            } catch (\Exception $e) {
+                \Log::error('Error al eliminar tractor: ' . $e->getMessage());
+                return back()->with('error', 'Hubo un error al eliminar el tractor. Por favor, inténtalo de nuevo.');
             }
-
-            // Eliminar las relaciones con el usuario actual
-            $tractor->owners()->detach(auth()->id());
-
-            // Si no hay más propietarios, eliminar el tractor
-            if ($tractor->owners()->count() === 0) {
-                $tractor->delete();
-            }
-
-            return redirect()->route('user.dashboard')
-                ->with('message', 'Tractor eliminado correctamente.');
         })->name('tractors.destroy');
 
         // Rutas para aperos de usuario
@@ -330,14 +560,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 return back()->withErrors(['tractor_id' => 'No tienes permiso para publicar este tractor.']);
             }
 
+            // Verificar que no hay otro anuncio activo para el mismo tractor
+            $existingActiveListing = \App\Models\Listing::where('tractor_id', $validated['tractor_id'])
+                ->where('is_active', true)
+                ->first();
+            
+            if ($existingActiveListing) {
+                return back()->withErrors(['tractor_id' => 'Ya existe un anuncio activo para este tractor.']);
+            }
+
             // Agregar el ID del usuario actual
             $validated['seller_id'] = auth()->id();
+            
+            // Asegurar que is_active tenga un valor por defecto
+            if (!isset($validated['is_active'])) {
+                $validated['is_active'] = true;
+            }
 
-            // Crear el anuncio
-            $listing = \App\Models\Listing::create($validated);
+            try {
+                // Crear el anuncio
+                $listing = \App\Models\Listing::create($validated);
 
-            return redirect()->route('user.dashboard')
-                ->with('message', 'Anuncio creado correctamente.');
+                return redirect()->route('user.dashboard')
+                    ->with('message', 'Anuncio creado correctamente.');
+            } catch (\Exception $e) {
+                \Log::error('Error al crear anuncio: ' . $e->getMessage());
+                return back()->withErrors(['general' => 'Hubo un error al crear el anuncio.']);
+            }
         })->name('listings.store');
 
         // Nueva ruta para editar anuncios
