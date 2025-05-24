@@ -14,15 +14,7 @@ class Apero extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'name',
-        'type',
-        'description',
-        'brand',
-        'model',
-        'year',
-        'is_available',
-    ];
+    protected $guarded = [];
 
     /**
      * The attributes that should be cast.

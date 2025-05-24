@@ -35,14 +35,13 @@
                     </div>
 
                     <!-- Sección DEBUG (temporal) -->
-                    <div class="mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded">
+                    <div class="mb-4 rounded border border-yellow-400 bg-yellow-100 p-4">
                         <h3 class="font-bold text-yellow-800">DEBUG INFO:</h3>
-                        <p class="text-yellow-700">
-                            Anuncios recibidos: {{ userListings?.length || 0 }}
-                        </p>
+                        <p class="text-yellow-700">Anuncios recibidos: {{ userListings?.length || 0 }}</p>
                         <div v-if="userListings && userListings.length > 0" class="text-xs text-yellow-600">
                             <div v-for="(listing, index) in userListings" :key="index">
-                                Anuncio {{ index + 1 }}: {{ listing.tractor?.brand || 'Sin marca' }} {{ listing.tractor?.model || 'Sin modelo' }} - {{ listing.price }}€
+                                Anuncio {{ index + 1 }}: {{ listing.tractor?.brand || 'Sin marca' }} {{ listing.tractor?.model || 'Sin modelo' }} -
+                                {{ listing.price }}€
                             </div>
                         </div>
                     </div>
@@ -92,12 +91,53 @@
                             </div>
                         </div>
 
+                        <!-- Mis Aperos -->
+                        <div class="overflow-hidden rounded-lg bg-white shadow-lg">
+                            <div class="flex items-center space-x-2 bg-green-700 p-4 font-medium text-white">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M4 4h12v12H4z" />
+                                </svg>
+                                <span>Mis Aperos</span>
+                            </div>
+                            <div class="p-4">
+                                <div v-if="userAperos && userAperos.length > 0" class="space-y-3">
+                                    <div
+                                        v-for="apero in userAperos"
+                                        :key="apero.id"
+                                        class="cursor-pointer rounded-md border-b border-gray-100 p-2 hover:bg-green-50"
+                                        @click="showAperoDetails(apero)"
+                                    >
+                                        <div class="font-medium text-gray-800">{{ apero.name }} - {{ apero.brand }} {{ apero.model }}</div>
+                                        <div class="text-sm text-gray-600">
+                                            {{ apero.year ? 'Año: ' + apero.year : 'Sin año' }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-else class="py-4 text-center text-gray-500">No tienes aperos registrados</div>
+                                <div class="mt-4">
+                                    <button
+                                        @click="handleShowCreateAperoForm"
+                                        class="flex w-full items-center justify-center rounded-md bg-green-100 py-2 text-green-700 transition hover:bg-green-200"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="mr-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
+                                            />
+                                        </svg>
+                                        Añadir apero
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Mis Anuncios -->
                         <div class="overflow-hidden rounded-lg bg-white shadow-lg">
                             <div class="flex items-center space-x-2 bg-green-700 p-4 font-medium text-white">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
-                                    <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
+                                    <path
+                                        d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"
+                                    />
                                 </svg>
                                 <span>Mis Anuncios</span>
                             </div>
@@ -106,41 +146,51 @@
                                     <div
                                         v-for="listing in userListings"
                                         :key="listing.id"
-                                        class="cursor-pointer rounded-md border border-gray-200 p-3 transition-colors duration-200 hover:bg-green-50 hover:border-green-300"
+                                        class="cursor-pointer rounded-md border border-gray-200 p-3 transition-colors duration-200 hover:border-green-300 hover:bg-green-50"
                                         @click="showListingDetails(listing)"
                                     >
                                         <div class="flex items-center justify-between">
                                             <div class="flex-1">
                                                 <div class="font-medium text-gray-800">
-                                                    {{ listing.tractor ? `${listing.tractor.brand || 'Tractor'} ${listing.tractor.model || ''}` : 'Tractor no especificado' }}
+                                                    {{
+                                                        listing.tractor
+                                                            ? `${listing.tractor.brand || 'Tractor'} ${listing.tractor.model || ''}`
+                                                            : 'Tractor no especificado'
+                                                    }}
                                                 </div>
-                                                <div class="text-sm text-gray-600 mt-1">
-                                                    {{ listing.type === 'sale' ? 'Venta' : 'Alquiler' }} - 
+                                                <div class="mt-1 text-sm text-gray-600">
+                                                    {{ listing.type === 'sale' ? 'Venta' : 'Alquiler' }} -
                                                     <span class="font-bold text-green-600">{{ formatCurrency(listing.price) }}</span>
                                                     <span v-if="listing.type === 'rental'" class="text-xs">/día</span>
                                                 </div>
-                                                <div class="text-xs text-gray-500 mt-1">
-                                                    {{ listing.requests?.length || 0 }} solicitud{{ (listing.requests?.length || 0) !== 1 ? 'es' : '' }}
+                                                <div class="mt-1 text-xs text-gray-500">
+                                                    {{ listing.requests?.length || 0 }} solicitud{{
+                                                        (listing.requests?.length || 0) !== 1 ? 'es' : ''
+                                                    }}
                                                 </div>
-                                                <div v-if="listing.description" class="text-xs text-gray-500 mt-1 truncate">
-                                                    {{ listing.description.length > 50 ? listing.description.substring(0, 50) + '...' : listing.description }}
+                                                <div v-if="listing.description" class="mt-1 truncate text-xs text-gray-500">
+                                                    {{
+                                                        listing.description.length > 50
+                                                            ? listing.description.substring(0, 50) + '...'
+                                                            : listing.description
+                                                    }}
                                                 </div>
                                             </div>
-                                            <div class="flex flex-col items-end space-y-1 ml-3">
-                                                <span 
+                                            <div class="ml-3 flex flex-col items-end space-y-1">
+                                                <span
                                                     class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium"
                                                     :class="{
                                                         'bg-green-100 text-green-800': listing.is_active,
-                                                        'bg-gray-100 text-gray-800': !listing.is_active
+                                                        'bg-gray-100 text-gray-800': !listing.is_active,
                                                     }"
                                                 >
                                                     {{ listing.is_active ? 'Activo' : 'Inactivo' }}
                                                 </span>
-                                                <span 
+                                                <span
                                                     class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium"
                                                     :class="{
                                                         'bg-purple-100 text-purple-800': listing.type === 'sale',
-                                                        'bg-blue-100 text-blue-800': listing.type === 'rental'
+                                                        'bg-blue-100 text-blue-800': listing.type === 'rental',
                                                     }"
                                                 >
                                                     {{ listing.type === 'sale' ? 'Venta' : 'Alquiler' }}
@@ -236,7 +286,9 @@
                         <div class="flex items-center justify-between bg-orange-600 p-4 font-medium text-white">
                             <div class="flex items-center space-x-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                                    <path
+                                        d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"
+                                    />
                                 </svg>
                                 <span>Notificaciones</span>
                             </div>
@@ -245,22 +297,26 @@
                             </span>
                         </div>
                         <div class="p-4">
-                            <div v-if="receivedRequests && receivedRequests.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
+                            <div v-if="receivedRequests && receivedRequests.length > 0" class="max-h-96 space-y-3 overflow-y-auto">
                                 <div
                                     v-for="request in receivedRequests"
                                     :key="request.id"
                                     class="cursor-pointer rounded-md border p-3 transition-colors duration-200 hover:bg-orange-50"
                                     :class="{
-                                        'border-orange-200 bg-orange-25': request.status === 'pending',
-                                        'border-gray-200 bg-gray-50': request.status !== 'pending'
+                                        'bg-orange-25 border-orange-200': request.status === 'pending',
+                                        'border-gray-200 bg-gray-50': request.status !== 'pending',
                                     }"
                                     @click="showReceivedRequestDetails(request)"
                                 >
                                     <div class="flex items-start justify-between">
                                         <div class="flex-1">
-                                            <div class="flex items-center space-x-2 mb-2">
+                                            <div class="mb-2 flex items-center space-x-2">
                                                 <div class="font-medium text-gray-800">
-                                                    {{ request.requester ? `${request.requester.first_name} ${request.requester.last_name}` : 'Usuario desconocido' }}
+                                                    {{
+                                                        request.requester
+                                                            ? `${request.requester.first_name} ${request.requester.last_name}`
+                                                            : 'Usuario desconocido'
+                                                    }}
                                                 </div>
                                                 <span
                                                     class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium"
@@ -269,50 +325,62 @@
                                                         'bg-green-100 text-green-800': request.status === 'accepted',
                                                         'bg-red-100 text-red-800': request.status === 'rejected',
                                                         'bg-blue-100 text-blue-800': request.status === 'completed',
-                                                        'bg-gray-100 text-gray-800': request.status === 'cancelled'
+                                                        'bg-gray-100 text-gray-800': request.status === 'cancelled',
                                                     }"
                                                 >
                                                     {{ requestStatusText(request.status) }}
                                                 </span>
                                             </div>
-                                            <div class="text-sm text-gray-600 mb-1">
+                                            <div class="mb-1 text-sm text-gray-600">
                                                 Solicita {{ request.type === 'sale' ? 'comprar' : 'alquilar' }}:
                                                 <span class="font-medium">
-                                                    {{ request.listing?.tractor ? `${request.listing.tractor.brand || 'Tractor'} ${request.listing.tractor.model || ''}` : 'Tractor' }}
+                                                    {{
+                                                        request.listing?.tractor
+                                                            ? `${request.listing.tractor.brand || 'Tractor'} ${request.listing.tractor.model || ''}`
+                                                            : 'Tractor'
+                                                    }}
                                                 </span>
                                             </div>
-                                            <div class="text-sm text-gray-600 mb-1">
+                                            <div class="mb-1 text-sm text-gray-600">
                                                 Ofrece: <span class="font-bold text-green-600">{{ formatCurrency(request.offered_price) }}</span>
                                                 <span v-if="request.type === 'rental'" class="text-xs">/día</span>
                                                 <span v-if="request.listing?.price" class="text-gray-500">
                                                     (Tu precio: {{ formatCurrency(request.listing.price) }})
                                                 </span>
                                             </div>
-                                            <div v-if="request.message" class="text-xs text-gray-500 italic truncate">
+                                            <div v-if="request.message" class="truncate text-xs text-gray-500 italic">
                                                 "{{ request.message.length > 60 ? request.message.substring(0, 60) + '...' : request.message }}"
                                             </div>
                                         </div>
-                                        <div class="flex flex-col items-end space-y-1 ml-3">
+                                        <div class="ml-3 flex flex-col items-end space-y-1">
                                             <div class="text-xs text-gray-400">
                                                 {{ formatDateShort(request.created_at) }}
                                             </div>
                                             <div v-if="request.status === 'pending'" class="flex space-x-1">
                                                 <button
                                                     @click.stop="acceptReceivedRequest(request)"
-                                                    class="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 text-xs rounded hover:bg-green-200 transition-colors"
+                                                    class="inline-flex items-center rounded bg-green-100 px-2 py-1 text-xs text-green-700 transition-colors hover:bg-green-200"
                                                     title="Aceptar solicitud"
                                                 >
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                        <path
+                                                            fill-rule="evenodd"
+                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                            clip-rule="evenodd"
+                                                        />
                                                     </svg>
                                                 </button>
                                                 <button
                                                     @click.stop="rejectReceivedRequest(request)"
-                                                    class="inline-flex items-center px-2 py-1 bg-red-100 text-red-700 text-xs rounded hover:bg-red-200 transition-colors"
+                                                    class="inline-flex items-center rounded bg-red-100 px-2 py-1 text-xs text-red-700 transition-colors hover:bg-red-200"
                                                     title="Rechazar solicitud"
                                                 >
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                                        <path
+                                                            fill-rule="evenodd"
+                                                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                                            clip-rule="evenodd"
+                                                        />
                                                     </svg>
                                                 </button>
                                             </div>
@@ -321,8 +389,19 @@
                                 </div>
                             </div>
                             <div v-else class="py-4 text-center text-gray-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5-5-5h5v-5a2 2 0 00-2-2H5a2 2 0 00-2 2v5z" />
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="mx-auto mb-2 h-12 w-12 text-gray-400"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M15 17h5l-5 5-5-5h5v-5a2 2 0 00-2-2H5a2 2 0 00-2 2v5z"
+                                    />
                                 </svg>
                                 No tienes notificaciones
                             </div>
@@ -376,6 +455,16 @@
         <!-- Modal para crear un nuevo tractor -->
         <TractorCreate v-if="showCreateTractorForm" @close="showCreateTractorForm = false" @created="handleTractorCreated" />
 
+        <AperoShow v-if="selectedApero" :apero="selectedApero" @close="selectedApero = null" @edit="editApero" @delete="confirmDeleteApero" />
+
+        <AperoCreate
+            v-if="showCreateAperoForm"
+            :user-tractors="props.userTractors"
+            :apero-to-edit="aperoToEdit"
+            @close="showCreateAperoForm = false"
+            @created="handleAperoCreated"
+        />
+
         <!-- Modal para mostrar detalles del anuncio -->
         <ListingShow
             v-if="selectedListing"
@@ -422,6 +511,8 @@
 </template>
 
 <script setup lang="ts">
+import AperoCreate from '@/Components/User/AperoCreate.vue';
+import AperoShow from '@/Components/User/AperoShow.vue';
 import DeleteConfirmation from '@/Components/User/DeleteConfirmation.vue';
 import ListingCreate from '@/Components/User/ListingCreate.vue';
 import ListingShow from '@/Components/User/ListingShow.vue';
@@ -432,7 +523,7 @@ import TractorShow from '@/Components/User/TractorShow.vue';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { ref, onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 
 // Propiedades del componente
 const props = defineProps({
@@ -440,13 +531,14 @@ const props = defineProps({
     userListings: Array,
     userRequests: Array,
     receivedRequests: Array,
-    availableListings: {
-        type: Array,
-        default: () => [],
-    },
+    availableListings: Array,
+    userAperos: Array,
 });
 
-// Estados para los modales y selecciones
+const selectedApero = ref(null);
+const showCreateAperoForm = ref(false);
+const aperoToEdit = ref(null);
+
 const selectedTractor = ref(null);
 const selectedListing = ref(null);
 const isEditingListing = ref(false);
@@ -456,12 +548,12 @@ const showCreateListingForm = ref(false);
 const showCreateRequestForm = ref(false);
 const itemToDelete = ref(null);
 
-// Debug al montar el componente
 onMounted(() => {
     console.log('Dashboard montado');
     console.log('userListings:', props.userListings);
     console.log('userTractors:', props.userTractors);
     console.log('userRequests:', props.userRequests);
+    console.log('receivedRequests:', props.receivedRequests);
 });
 
 // Formateador de moneda
@@ -478,15 +570,15 @@ const formatDateShort = (date) => {
     const now = new Date();
     const diffTime = Math.abs(now - dateObj);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays <= 1) {
         return 'Hoy';
     } else if (diffDays <= 7) {
         return `Hace ${diffDays} días`;
     } else {
-        return dateObj.toLocaleDateString('es-ES', { 
-            day: 'numeric', 
-            month: 'short' 
+        return dateObj.toLocaleDateString('es-ES', {
+            day: 'numeric',
+            month: 'short',
         });
     }
 };
@@ -533,23 +625,48 @@ const confirmDeleteTractor = (tractor) => {
     itemToDelete.value = { type: 'tractor', item: tractor };
 };
 
+const showAperoDetails = (apero) => {
+    selectedApero.value = apero;
+};
+
+const editApero = (apero) => {
+    selectedApero.value = null;
+    aperoToEdit.value = apero;
+    showCreateAperoForm.value = true;
+};
+
+const handleShowCreateAperoForm = () => {
+    showCreateAperoForm.value = true;
+};
+
+const handleAperoCreated = () => {
+    showCreateAperoForm.value = false;
+    router.reload();
+};
+
+const confirmDeleteApero = (apero) => {
+    selectedApero.value = null;
+    itemToDelete.value = { type: 'apero', item: apero };
+};
+
 // Funciones para mostrar y editar anuncios
 const showListingDetails = (listing) => {
     console.log('Mostrando detalles del anuncio:', listing);
-    
+
     // Si el listing ya tiene todos los datos necesarios, usarlos directamente
     if (listing.tractor && listing.requests !== undefined) {
         selectedListing.value = listing;
         return;
     }
-    
+
     // Si no, cargar los datos completos desde el servidor
-    axios.get(route('user.listings.details', listing.id))
-        .then(response => {
+    axios
+        .get(route('user.listings.details', listing.id))
+        .then((response) => {
             selectedListing.value = response.data.listing;
             console.log('Datos del anuncio cargados:', selectedListing.value);
         })
-        .catch(error => {
+        .catch((error) => {
             console.error('Error al cargar detalles del anuncio:', error);
             // Como fallback, usar los datos que tenemos
             selectedListing.value = listing;
@@ -557,8 +674,8 @@ const showListingDetails = (listing) => {
 };
 
 const startEditingListing = (listing) => {
-  isEditingListing.value = true;
-  // No es necesario cerrar el modal actual, solo indicar que está en modo edición
+    isEditingListing.value = true;
+    // No es necesario cerrar el modal actual, solo indicar que está en modo edición
 };
 
 const showRequestDetails = (request) => {
@@ -643,6 +760,13 @@ const deleteConfirmed = () => {
                 router.reload();
             },
         });
+    } else if (itemToDelete.value.type === 'apero') {
+        const apero = itemToDelete.value.item;
+        router.delete(route('user.aperos.destroy', apero.id), {
+            onSuccess: () => {
+                router.reload();
+            },
+        });
     } else if (itemToDelete.value.type === 'listing') {
         const listing = itemToDelete.value.item;
         router.delete(route('user.listings.destroy', listing.id), {
@@ -705,7 +829,7 @@ const rejectRequest = (request) => {
 // Contar notificaciones no leídas (solicitudes pendientes)
 const getUnreadNotificationsCount = () => {
     if (!props.receivedRequests) return 0;
-    return props.receivedRequests.filter(request => request.status === 'pending').length;
+    return props.receivedRequests.filter((request) => request.status === 'pending').length;
 };
 
 // Mostrar detalles de una solicitud recibida
@@ -719,17 +843,21 @@ const acceptReceivedRequest = (request) => {
     if (!confirm(`¿Aceptar la solicitud de ${request.requester?.first_name || 'este usuario'}?`)) {
         return;
     }
-    
-    router.put(route('user.requests.accept', request.id), {}, {
-        onSuccess: () => {
-            // Actualizar el estado localmente para feedback inmediato
-            request.status = 'accepted';
-            router.reload();
+
+    router.put(
+        route('user.requests.accept', request.id),
+        {},
+        {
+            onSuccess: () => {
+                // Actualizar el estado localmente para feedback inmediato
+                request.status = 'accepted';
+                router.reload();
+            },
+            onError: (errors) => {
+                console.error('Error al aceptar la solicitud:', errors);
+            },
         },
-        onError: (errors) => {
-            console.error('Error al aceptar la solicitud:', errors);
-        }
-    });
+    );
 };
 
 // Rechazar una solicitud recibida
@@ -737,17 +865,21 @@ const rejectReceivedRequest = (request) => {
     if (!confirm(`¿Rechazar la solicitud de ${request.requester?.first_name || 'este usuario'}?`)) {
         return;
     }
-    
-    router.put(route('user.requests.reject', request.id), {}, {
-        onSuccess: () => {
-            // Actualizar el estado localmente para feedback inmediato
-            request.status = 'rejected';
-            router.reload();
+
+    router.put(
+        route('user.requests.reject', request.id),
+        {},
+        {
+            onSuccess: () => {
+                // Actualizar el estado localmente para feedback inmediato
+                request.status = 'rejected';
+                router.reload();
+            },
+            onError: (errors) => {
+                console.error('Error al rechazar la solicitud:', errors);
+            },
         },
-        onError: (errors) => {
-            console.error('Error al rechazar la solicitud:', errors);
-        }
-    });
+    );
 };
 
 // Actualizar también la función de debug onMounted:
