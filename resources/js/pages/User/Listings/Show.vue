@@ -55,19 +55,19 @@
                     <div v-if="listing.tractor" class="grid grid-cols-2 gap-4">
                       <div>
                         <p class="text-sm text-gray-500">Marca</p>
-                        <p class="font-medium">{{ listing.tractor.brand }}</p>
+                        <p class="font-medium text-gray-900">{{ listing.tractor.brand }}</p>
                       </div>
                       <div>
                         <p class="text-sm text-gray-500">Modelo</p>
-                        <p class="font-medium">{{ listing.tractor.model }}</p>
+                        <p class="font-medium text-gray-900">{{ listing.tractor.model }}</p>
                       </div>
                       <div>
                         <p class="text-sm text-gray-500">Año</p>
-                        <p class="font-medium">{{ listing.tractor.year || 'No especificado' }}</p>
+                        <p class="font-medium text-gray-900">{{ listing.tractor.year || 'No especificado' }}</p>
                       </div>
                       <div>
                         <p class="text-sm text-gray-500">Potencia</p>
-                        <p class="font-medium">{{ listing.tractor.horsepower || 'No especificado' }} CV</p>
+                        <p class="font-medium text-gray-900">{{ listing.tractor.horsepower || 'No especificado' }} CV</p>
                       </div>
                     </div>
                     <div v-else class="text-gray-500">
@@ -94,7 +94,7 @@
                         </span>
                       </div>
                       <div>
-                        <p class="font-medium">
+                        <p class="font-medium text-gray-900">
                           {{ listing.seller ? (listing.seller.first_name + ' ' + listing.seller.last_name) : 'Usuario' }}
                         </p>
                         <p class="text-sm text-gray-500">

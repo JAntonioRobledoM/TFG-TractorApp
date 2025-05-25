@@ -44,7 +44,7 @@
                     v-model="search" 
                     type="text" 
                     placeholder="Buscar anuncios..." 
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200 focus:ring-opacity-50"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200 focus:ring-opacity-50 text-gray-900"
                   />
                   <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -54,12 +54,12 @@
                 </div>
                 <select 
                   v-model="sortBy" 
-                  class="rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200 focus:ring-opacity-50"
+                  class="rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200 focus:ring-opacity-50 text-gray-900"
                 >
-                  <option value="newest">Más recientes</option>
-                  <option value="oldest">Más antiguos</option>
-                  <option value="priceAsc">Precio: menor a mayor</option>
-                  <option value="priceDesc">Precio: mayor a menor</option>
+                  <option value="newest" class="text-gray-900">Más recientes</option>
+                  <option value="oldest" class="text-gray-900">Más antiguos</option>
+                  <option value="priceAsc" class="text-gray-900">Precio: menor a mayor</option>
+                  <option value="priceDesc" class="text-gray-900">Precio: mayor a menor</option>
                 </select>
               </div>
             </div>

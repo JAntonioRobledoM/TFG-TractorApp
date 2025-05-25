@@ -180,7 +180,7 @@
                     id="brand" 
                     v-model="createForm.brand"
                     type="text"
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
                     placeholder="Ej: John Deere, Massey Ferguson"
                   />
                 </div>
@@ -192,7 +192,7 @@
                     id="model" 
                     v-model="createForm.model"
                     type="text"
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
                     placeholder="Ej: 5075E, MF 4707"
                   />
                 </div>
@@ -206,7 +206,7 @@
                     type="number"
                     min="1900"
                     :max="new Date().getFullYear()"
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
                     placeholder="Ej: 2020"
                   />
                 </div>
@@ -219,7 +219,7 @@
                     v-model="createForm.horsepower"
                     type="number"
                     min="0"
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
                     placeholder="Ej: 75"
                   />
                 </div>
@@ -233,7 +233,7 @@
                     type="number"
                     min="0"
                     step="0.1"
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
                     placeholder="Ej: 1250.5"
                   />
                 </div>
@@ -242,7 +242,7 @@
                     <input 
                       v-model="createForm.is_available"
                       type="checkbox"
-                      class="rounded border-gray-300 text-green-600 shadow-sm focus:ring-green-500"
+                      class="rounded border-gray-300 text-green-600 shadow-sm focus:ring-green-500 text-gray-900"
                     />
                     <span class="ml-2 text-sm text-gray-700">Disponible para uso</span>
                   </label>
@@ -256,7 +256,7 @@
                   id="description" 
                   v-model="createForm.description"
                   rows="3"
-                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
                   placeholder="Descripción adicional del tractor..."
                 ></textarea>
               </div>

@@ -39,6 +39,25 @@ Route::get('listings/rentals', [AdminListingController::class, 'rentals'])->name
 
 // Dashboard para usuarios normales (accesible a todos los usuarios autenticados)
 Route::middleware(['auth', 'verified'])->group(function () {
+
+    // Dentro del grupo de rutas de usuario, agregar esta nueva ruta
+    Route::put('tractors/{tractor}/update-hours', function (Illuminate\Http\Request $request, App\Models\Tractor $tractor) {
+        // Verificar que el usuario es propietario del tractor
+        if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
+            abort(403, 'No tienes permiso para editar este tractor.');
+        }
+
+        $validated = $request->validate([
+            'working_hours' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $tractor->update([
+            'working_hours' => $validated['working_hours'],
+        ]);
+
+        return back()->with('message', 'Horas de trabajo actualizadas correctamente.');
+    })->name('user.tractors.update-hours');
+
     // Dashboard para usuarios normales
     Route::get('user/dashboard', function () {
         $user = auth()->user();

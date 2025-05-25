@@ -92,12 +92,19 @@
                       <span class="text-sm text-gray-900">{{ tractor.horsepower }} HP</span>
                     </div>
                     
-                    <div v-if="tractor.working_hours" class="flex items-center space-x-2">
+                    <!-- Horas de trabajo con botón para actualizar -->
+                    <div class="flex items-center space-x-2">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <span class="text-sm font-medium text-gray-600">Horas de trabajo:</span>
-                      <span class="text-sm text-gray-900">{{ tractor.working_hours }} horas</span>
+                      <span class="text-sm text-gray-900">{{ tractor.working_hours || 0 }} horas</span>
+                      <button 
+                        @click="showHoursModal = true"
+                        class="ml-2 text-xs text-blue-600 hover:text-blue-800 border border-blue-300 rounded-md px-2 py-1"
+                      >
+                        Actualizar
+                      </button>
                     </div>
                     
                     <div v-if="tractor.license_plate" class="flex items-center space-x-2">
@@ -234,6 +241,16 @@
                       </svg>
                       Ver Mis Aperos
                     </Link>
+
+                    <button 
+                      @click="showEditModal = true"
+                      class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Editar Tractor
+                    </button>
                     
                     <button 
                       @click="deleteTractor"
@@ -304,6 +321,64 @@
       </div>
     </div>
 
+    <!-- Modal para actualizar horas de trabajo -->
+    <div v-if="showHoursModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 text-center mt-4">Actualizar Horas de Trabajo</h3>
+          <div class="mt-4">
+            <form @submit.prevent="updateHours">
+              <div class="mb-4">
+                <label for="current_hours" class="block text-sm font-medium text-gray-700 mb-2">
+                  Horas actuales
+                </label>
+                <div class="text-sm text-gray-600 bg-gray-100 p-2 rounded-md mb-3">
+                  {{ tractor.working_hours || 0 }} horas
+                </div>
+                
+                <label for="working_hours" class="block text-sm font-medium text-gray-700 mb-2">
+                  Nuevas horas de trabajo
+                </label>
+                <input 
+                  id="working_hours" 
+                  v-model="hoursForm.working_hours"
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
+                  placeholder="Ej: 1250.5"
+                  required
+                />
+                <p class="text-xs text-gray-500 mt-1">
+                  Introduce el valor actual de las horas de trabajo del tractor.
+                </p>
+              </div>
+              <div class="flex items-center justify-end space-x-2">
+                <button 
+                  type="button"
+                  @click="showHoursModal = false"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                >
+                  Actualizar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal para conectar apero -->
     <div v-if="showConnectAperoModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
@@ -356,6 +431,128 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal para editar tractor -->
+    <div v-if="showEditModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 text-center mt-4">Editar Tractor</h3>
+          <div class="mt-6">
+            <form @submit.prevent="updateTractor" class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="brand" class="block text-sm font-medium text-gray-700 mb-1">
+                    Marca
+                  </label>
+                  <input 
+                    id="brand" 
+                    v-model="editForm.brand"
+                    type="text"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
+                    placeholder="Ej: John Deere, Massey Ferguson"
+                  />
+                </div>
+                <div>
+                  <label for="model" class="block text-sm font-medium text-gray-700 mb-1">
+                    Modelo
+                  </label>
+                  <input 
+                    id="model" 
+                    v-model="editForm.model"
+                    type="text"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
+                    placeholder="Ej: 5075E, MF 4707"
+                  />
+                </div>
+                <div>
+                  <label for="year" class="block text-sm font-medium text-gray-700 mb-1">
+                    Año
+                  </label>
+                  <input 
+                    id="year" 
+                    v-model="editForm.year"
+                    type="number"
+                    min="1900"
+                    :max="new Date().getFullYear()"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
+                    placeholder="Ej: 2020"
+                  />
+                </div>
+                <div>
+                  <label for="horsepower" class="block text-sm font-medium text-gray-700 mb-1">
+                    Potencia (HP)
+                  </label>
+                  <input 
+                    id="horsepower" 
+                    v-model="editForm.horsepower"
+                    type="number"
+                    min="0"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
+                    placeholder="Ej: 75"
+                  />
+                </div>
+                <div>
+                  <label for="working_hours" class="block text-sm font-medium text-gray-700 mb-1">
+                    Horas de trabajo
+                  </label>
+                  <input 
+                    id="working_hours" 
+                    v-model="editForm.working_hours"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900" 
+                    placeholder="Ej: 1250.5"
+                  />
+                </div>
+                <div>
+                  <label class="flex items-center">
+                    <input 
+                      v-model="editForm.is_available"
+                      type="checkbox"
+                      class="rounded border-gray-300 text-green-600 shadow-sm focus:ring-green-500 text-gray-900"
+                    />
+                    <span class="ml-2 text-sm text-gray-700">Disponible para uso</span>
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+                  Descripción
+                </label>
+                <textarea 
+                  id="description" 
+                  v-model="editForm.description"
+                  rows="3"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
+                  placeholder="Descripción adicional del tractor..."
+                ></textarea>
+              </div>
+              <div class="flex items-center justify-end space-x-3 pt-4">
+                <button 
+                  type="button"
+                  @click="showEditModal = false"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                >
+                  Guardar Cambios
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
   </UserLayout>
 </template>
 
@@ -395,9 +592,24 @@ const props = defineProps<{
 
 // Estados reactivos
 const showConnectAperoModal = ref(false);
+const showHoursModal = ref(false);
+const showEditModal = ref(false);
 const connectAperoForm = reactive({
   apero_id: ''
 });
+const hoursForm = reactive({
+  working_hours: props.tractor.working_hours || 0
+});
+const editForm = reactive({
+  brand: props.tractor.brand || '',
+  model: props.tractor.model || '',
+  year: props.tractor.year || null,
+  description: props.tractor.description || '',
+  horsepower: props.tractor.horsepower || null,
+  working_hours: props.tractor.working_hours || 0,
+  is_available: props.tractor.is_available
+});
+
 const availableAperos = ref(props.availableAperos || []);
 
 // Computed para filtrar aperos activos
@@ -447,6 +659,30 @@ const disconnectApero = (apero: any) => {
       }
     });
   }
+};
+
+// Nueva función para actualizar solo las horas de trabajo
+const updateHours = () => {
+  router.put(route('user.tractors.update-hours', props.tractor.id), hoursForm, {
+    onSuccess: () => {
+      showHoursModal.value = false;
+    },
+    onError: (errors) => {
+      console.error('Error al actualizar horas de trabajo:', errors);
+    }
+  });
+};
+
+// Función para actualizar el tractor completo
+const updateTractor = () => {
+  router.put(route('user.tractors.update', props.tractor.id), editForm, {
+    onSuccess: () => {
+      showEditModal.value = false;
+    },
+    onError: (errors) => {
+      console.error('Error al actualizar tractor:', errors);
+    }
+  });
 };
 
 const deleteTractor = () => {
