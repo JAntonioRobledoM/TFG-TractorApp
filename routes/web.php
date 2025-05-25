@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\MessageController;
 use App\Http\Controllers\Admin\ConversationController;
 use App\Http\Controllers\Admin\AperoController;
 use App\Http\Controllers\Public\ContactController;
+use App\Http\Controllers\ChatController;
 
 // Importar controlador público principal
 use App\Http\Controllers\Public\HomeController;
@@ -504,38 +505,38 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('user.aperos.store');
 
         // Ruta para editar un apero existente
-Route::put('aperos/{apero}', function (Illuminate\Http\Request $request, \App\Models\Apero $apero) {
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'brand' => 'nullable|string|max:255',
-        'model' => 'nullable|string|max:255',
-        'year' => 'nullable|integer',
-        'tractor_id' => 'required|exists:tractors,id',
-    ]);
+        Route::put('aperos/{apero}', function (Illuminate\Http\Request $request, \App\Models\Apero $apero) {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'brand' => 'nullable|string|max:255',
+                'model' => 'nullable|string|max:255',
+                'year' => 'nullable|integer',
+                'tractor_id' => 'required|exists:tractors,id',
+            ]);
 
-    // Verificar que el usuario tiene permiso sobre el tractor
-    $tractor = \App\Models\Tractor::findOrFail($validated['tractor_id']);
-    if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
-        abort(403, 'No tienes permiso para usar este tractor.');
-    }
+            // Verificar que el usuario tiene permiso sobre el tractor
+            $tractor = \App\Models\Tractor::findOrFail($validated['tractor_id']);
+            if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
+                abort(403, 'No tienes permiso para usar este tractor.');
+            }
 
-    // Actualizar campos del apero
-    $apero->update([
-        'name' => $validated['name'],
-        'brand' => $validated['brand'],
-        'model' => $validated['model'],
-        'year' => $validated['year'],
-    ]);
+            // Actualizar campos del apero
+            $apero->update([
+                'name' => $validated['name'],
+                'brand' => $validated['brand'],
+                'model' => $validated['model'],
+                'year' => $validated['year'],
+            ]);
 
-    // Sincronizar relación si es necesario
-    $currentTractorId = $apero->tractors()->first()?->id;
-    if ($currentTractorId && $currentTractorId !== $tractor->id) {
-        $apero->tractors()->detach();
-        $tractor->aperos()->attach($apero->id, ['attached_at' => now()]);
-    }
+            // Sincronizar relación si es necesario
+            $currentTractorId = $apero->tractors()->first()?->id;
+            if ($currentTractorId && $currentTractorId !== $tractor->id) {
+                $apero->tractors()->detach();
+                $tractor->aperos()->attach($apero->id, ['attached_at' => now()]);
+            }
 
-    return redirect()->route('user.dashboard')->with('message', 'Apero actualizado correctamente.');
-})->name('aperos.update');
+            return redirect()->route('user.dashboard')->with('message', 'Apero actualizado correctamente.');
+        })->name('aperos.update');
 
 
         // API para obtener aperos disponibles para un tractor
@@ -868,6 +869,13 @@ Route::put('aperos/{apero}', function (Illuminate\Http\Request $request, \App\Mo
             return redirect()->route('user.dashboard')
                 ->with('message', 'Solicitud eliminada correctamente.');
         })->name('requests.destroy');
+    });
+
+        Route::prefix('chat')->name('chat.')->group(function () {
+        Route::get('/conversations', [ChatController::class, 'getUserConversations'])->name('conversations');
+        Route::get('/request/{request}/conversation', [ChatController::class, 'getOrCreateConversation'])->name('request.conversation');
+        Route::get('/conversations/{conversation}/messages', [ChatController::class, 'getMessages'])->name('conversation.messages');
+        Route::post('/conversations/{conversation}/messages', [ChatController::class, 'sendMessage'])->name('conversation.send');
     });
 });
 

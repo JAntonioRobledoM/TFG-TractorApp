@@ -2,35 +2,28 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Conversation extends Model
 {
-    use HasFactory;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'title',
-    ];
-
-    /**
-     * Get the users that are part of this conversation.
-     */
-    public function users()
+    protected $fillable = ['title', 'request_id'];
+    
+    public function participants(): BelongsToMany
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class, 'conversation_user')
+            ->withTimestamps();
     }
-
-    /**
-     * Get the messages for this conversation.
-     */
-    public function messages()
+    
+    public function messages(): HasMany
     {
-        return $this->morphMany(Message::class, 'related');
+        return $this->hasMany(Message::class);
+    }
+    
+    public function request(): BelongsTo
+    {
+        return $this->belongsTo(Request::class);
     }
 }

@@ -14,16 +14,7 @@ class Request extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'listing_id',
-        'requester_id',
-        'type',
-        'status',
-        'offered_price',
-        'requested_start_date',
-        'requested_end_date',
-        'message',
-    ];
+    protected $guarded = [];
 
     /**
      * The attributes that should be cast.
@@ -50,5 +41,13 @@ class Request extends Model
     public function requester()
     {
         return $this->belongsTo(User::class, 'requester_id');
+    }
+
+        /**
+     * La conversación asociada a esta solicitud.
+     */
+    public function conversation()
+    {
+        return $this->hasOne(Conversation::class);
     }
 }

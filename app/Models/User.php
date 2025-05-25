@@ -77,9 +77,9 @@ class User extends Authenticatable
      */
     public function conversations()
     {
-        return $this->belongsToMany(Conversation::class);
+        return $this->belongsToMany(Conversation::class, 'conversation_user')
+            ->withTimestamps();
     }
-
     /**
      * Get the messages sent by the user.
      */
@@ -113,4 +113,6 @@ class User extends Authenticatable
     {
         return $this->pass;
     }
+
+    
 }

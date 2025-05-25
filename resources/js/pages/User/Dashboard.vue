@@ -259,6 +259,30 @@
                                             {{ request.type === 'sale' ? 'Compra' : 'Alquiler' }} -
                                             <span class="font-bold text-green-600">{{ formatCurrency(request.offered_price) }}</span>
                                         </div>
+
+                                        <!-- Botón de chat para solicitudes aceptadas -->
+                                        <div v-if="request.status === 'accepted'" class="mt-2">
+                                            <button
+                                                @click.stop="openChatForRequest(request, $event)"
+                                                class="inline-flex items-center rounded bg-green-600 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-green-700"
+                                            >
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    class="mr-1 h-4 w-4"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                                                    />
+                                                </svg>
+                                                Chatear
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div v-else class="py-4 text-center text-gray-500">No tienes solicitudes</div>
@@ -350,6 +374,30 @@
                                             </div>
                                             <div v-if="request.message" class="truncate text-xs text-gray-500 italic">
                                                 "{{ request.message.length > 60 ? request.message.substring(0, 60) + '...' : request.message }}"
+                                            </div>
+
+                                            <!-- Botón de chat para solicitudes aceptadas -->
+                                            <div v-if="request.status === 'accepted'" class="mt-2">
+                                                <button
+                                                    @click.stop="openChatForRequest(request, $event)"
+                                                    class="inline-flex items-center rounded bg-green-600 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-green-700"
+                                                >
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        class="mr-1 h-4 w-4"
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        stroke="currentColor"
+                                                    >
+                                                        <path
+                                                            stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                                                        />
+                                                    </svg>
+                                                    Chatear
+                                                </button>
                                             </div>
                                         </div>
                                         <div class="ml-3 flex flex-col items-end space-y-1">
@@ -507,10 +555,19 @@
 
         <!-- Modal de confirmación para eliminar -->
         <DeleteConfirmation v-if="itemToDelete" :item-type="itemToDelete.type" @confirm="deleteConfirmed" @cancel="cancelDelete" />
+
+        <!-- Modal de chat para solicitudes -->
+        <div v-if="showChatModal && chatRequestId" class="fixed inset-0 z-50 flex items-center justify-center">
+            <div class="absolute inset-0 bg-black opacity-50" @click="showChatModal = false"></div>
+            <div class="z-10 w-full max-w-2xl">
+                <ChatButton :requestId="chatRequestId" :userId="$page.props.auth.user.id" @close="showChatModal = false" />
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
+import ChatButton from '@/Components/ChatButton.vue'; // Importamos el componente de chat
 import AperoCreate from '@/Components/User/AperoCreate.vue';
 import AperoShow from '@/Components/User/AperoShow.vue';
 import DeleteConfirmation from '@/Components/User/DeleteConfirmation.vue';
@@ -547,6 +604,10 @@ const showCreateTractorForm = ref(false);
 const showCreateListingForm = ref(false);
 const showCreateRequestForm = ref(false);
 const itemToDelete = ref(null);
+
+// Variables para el chat
+const chatRequestId = ref(null);
+const showChatModal = ref(false);
 
 onMounted(() => {
     console.log('Dashboard montado');
@@ -599,6 +660,17 @@ const requestStatusText = (status) => {
         default:
             return status;
     }
+};
+
+// Función para abrir el chat
+const openChatForRequest = (request, event) => {
+    // Evitar que se abra el modal de detalles de la solicitud
+    if (event) {
+        event.stopPropagation();
+    }
+
+    chatRequestId.value = request.id;
+    showChatModal.value = true;
 };
 
 // Funciones para tractores
@@ -882,15 +954,7 @@ const rejectReceivedRequest = (request) => {
     );
 };
 
-// Actualizar también la función de debug onMounted:
-onMounted(() => {
-    console.log('Dashboard montado');
-    console.log('userListings:', props.userListings);
-    console.log('userTractors:', props.userTractors);
-    console.log('userRequests:', props.userRequests);
-    console.log('receivedRequests:', props.receivedRequests); // Nueva línea
-});
-
+// Completar una solicitud
 const completeRequest = (request) => {
     router.put(
         route('user.requests.complete', request.id),

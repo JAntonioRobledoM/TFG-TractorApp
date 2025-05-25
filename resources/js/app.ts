@@ -7,6 +7,11 @@ import { createApp, h } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
 
+// Importar los componentes de chat
+import Chat from './Components/Chat.vue';
+import ChatButton from './Components/ChatButton.vue';
+import NotificacionesChat from './Components/NotificacionesChat.vue';
+
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
     interface ImportMetaEnv {
@@ -26,10 +31,17 @@ createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
     setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
-            .use(plugin)
-            .use(ZiggyVue)
-            .mount(el);
+        const app = createApp({ render: () => h(App, props) });
+        
+        // Registrar componentes globalmente
+        app.component('Chat', Chat);
+        app.component('ChatButton', ChatButton);
+        app.component('NotificacionesChat', NotificacionesChat);
+        
+        // Usar plugins
+        app.use(plugin)
+           .use(ZiggyVue)
+           .mount(el);
     },
     progress: {
         color: '#4B5563',
