@@ -59,7 +59,8 @@
               >
                 <div 
                   v-show="showMaquinariaDropdown"
-                  class="absolute left-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                  class="absolute left-0 mt-1 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                  style="top: 100%;"
                 >
                   <div class="px-4 py-2 border-b border-green-200 bg-green-50 rounded-t-lg">
                     <div class="font-medium text-base text-green-800">Gestiona tu Maquinaria</div>

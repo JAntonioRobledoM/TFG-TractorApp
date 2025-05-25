@@ -38,6 +38,25 @@ Route::get('listings/rentals', [AdminListingController::class, 'rentals'])->name
 
 // Dashboard para usuarios normales (accesible a todos los usuarios autenticados)
 Route::middleware(['auth', 'verified'])->group(function () {
+
+    // Dentro del grupo de rutas de usuario, agregar esta nueva ruta
+    Route::put('tractors/{tractor}/update-hours', function (Illuminate\Http\Request $request, App\Models\Tractor $tractor) {
+        // Verificar que el usuario es propietario del tractor
+        if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
+            abort(403, 'No tienes permiso para editar este tractor.');
+        }
+
+        $validated = $request->validate([
+            'working_hours' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $tractor->update([
+            'working_hours' => $validated['working_hours'],
+        ]);
+
+        return back()->with('message', 'Horas de trabajo actualizadas correctamente.');
+    })->name('user.tractors.update-hours');
+
     // Dashboard para usuarios normales
     Route::get('user/dashboard', function () {
         $user = auth()->user();
@@ -504,38 +523,38 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('user.aperos.store');
 
         // Ruta para editar un apero existente
-Route::put('aperos/{apero}', function (Illuminate\Http\Request $request, \App\Models\Apero $apero) {
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'brand' => 'nullable|string|max:255',
-        'model' => 'nullable|string|max:255',
-        'year' => 'nullable|integer',
-        'tractor_id' => 'required|exists:tractors,id',
-    ]);
+        Route::put('aperos/{apero}', function (Illuminate\Http\Request $request, \App\Models\Apero $apero) {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'brand' => 'nullable|string|max:255',
+                'model' => 'nullable|string|max:255',
+                'year' => 'nullable|integer',
+                'tractor_id' => 'required|exists:tractors,id',
+            ]);
 
-    // Verificar que el usuario tiene permiso sobre el tractor
-    $tractor = \App\Models\Tractor::findOrFail($validated['tractor_id']);
-    if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
-        abort(403, 'No tienes permiso para usar este tractor.');
-    }
+            // Verificar que el usuario tiene permiso sobre el tractor
+            $tractor = \App\Models\Tractor::findOrFail($validated['tractor_id']);
+            if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
+                abort(403, 'No tienes permiso para usar este tractor.');
+            }
 
-    // Actualizar campos del apero
-    $apero->update([
-        'name' => $validated['name'],
-        'brand' => $validated['brand'],
-        'model' => $validated['model'],
-        'year' => $validated['year'],
-    ]);
+            // Actualizar campos del apero
+            $apero->update([
+                'name' => $validated['name'],
+                'brand' => $validated['brand'],
+                'model' => $validated['model'],
+                'year' => $validated['year'],
+            ]);
 
-    // Sincronizar relación si es necesario
-    $currentTractorId = $apero->tractors()->first()?->id;
-    if ($currentTractorId && $currentTractorId !== $tractor->id) {
-        $apero->tractors()->detach();
-        $tractor->aperos()->attach($apero->id, ['attached_at' => now()]);
-    }
+            // Sincronizar relación si es necesario
+            $currentTractorId = $apero->tractors()->first()?->id;
+            if ($currentTractorId && $currentTractorId !== $tractor->id) {
+                $apero->tractors()->detach();
+                $tractor->aperos()->attach($apero->id, ['attached_at' => now()]);
+            }
 
-    return redirect()->route('user.dashboard')->with('message', 'Apero actualizado correctamente.');
-})->name('aperos.update');
+            return redirect()->route('user.dashboard')->with('message', 'Apero actualizado correctamente.');
+        })->name('aperos.update');
 
 
         // API para obtener aperos disponibles para un tractor
