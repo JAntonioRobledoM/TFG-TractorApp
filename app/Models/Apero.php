@@ -23,6 +23,7 @@ class Apero extends Model
         'model',
         'year',
         'is_available',
+        'user_id',
         'image',
     ];
 

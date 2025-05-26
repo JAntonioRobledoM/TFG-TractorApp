@@ -3,18 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Message extends Model
 {
-    protected $fillable = ['conversation_id', 'sender_id', 'content', 'is_read'];
-    
-    public function conversation(): BelongsTo
+    protected $guarded = [];
+
+    protected $casts = [
+        'is_read' => 'boolean',
+    ];
+
+    public function conversation()
     {
         return $this->belongsTo(Conversation::class);
     }
-    
-    public function sender(): BelongsTo
+
+    public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');
     }

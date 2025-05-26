@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -22,7 +21,7 @@ class Conversation extends Model
         return $this->hasMany(Message::class);
     }
     
-    public function request(): BelongsTo
+    public function request()
     {
         return $this->belongsTo(Request::class);
     }
