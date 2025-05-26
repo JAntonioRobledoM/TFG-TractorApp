@@ -25,6 +25,7 @@ class Apero extends Model
         'is_available',
         'user_id',
         'image',
+        'user_id',
     ];
 
     /**
@@ -52,6 +53,14 @@ class Apero extends Model
         return $this->belongsToMany(Tractor::class)
             ->withTimestamps()
             ->withPivot('attached_at', 'detached_at');
+    }
+
+    /**
+     * Get the user that owns the apero.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**
