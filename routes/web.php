@@ -340,6 +340,120 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Rutas de usuario para anuncios y solicitudes
     Route::prefix('user')->name('user.')->group(function () {
+        // Rutas para anuncios de usuario
+        Route::get('listings', [ListingController::class, 'index'])->name('listings.index');
+        Route::get('listings/sales', [ListingController::class, 'sales'])->name('listings.sales');
+        Route::get('listings/rentals', [ListingController::class, 'rentals'])->name('listings.rentals');
+        Route::get('listings/{listing}', [ListingController::class, 'show'])->name('listings.show');
+
+        // Ruta para crear anuncios
+        Route::post('listings', function (Illuminate\Http\Request $request) {
+            $validated = $request->validate([
+                'tractor_id' => ['required', 'exists:tractors,id'],
+                'type' => ['required', 'string', 'in:sale,rental'],
+                'price' => ['required', 'numeric', 'min:0'],
+                'description' => ['nullable', 'string'],
+                'is_active' => ['boolean'],
+                'start_date' => ['nullable', 'date', 'required_if:type,rental'],
+                'end_date' => ['nullable', 'date', 'required_if:type,rental', 'after_or_equal:start_date'],
+            ]);
+
+            // Verificar que el usuario es propietario del tractor
+            $tractor = \App\Models\Tractor::find($validated['tractor_id']);
+            if (!$tractor) {
+                return back()->withErrors(['tractor_id' => 'El tractor seleccionado no existe.']);
+            }
+
+            // Verificar si el usuario posee el tractor
+            if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
+                return back()->withErrors(['tractor_id' => 'No tienes permiso para publicar este tractor.']);
+            }
+
+            // Verificar que no hay otro anuncio activo para el mismo tractor
+            $existingActiveListing = \App\Models\Listing::where('tractor_id', $validated['tractor_id'])
+                ->where('is_active', true)
+                ->first();
+
+            if ($existingActiveListing) {
+                return back()->withErrors(['tractor_id' => 'Ya existe un anuncio activo para este tractor.']);
+            }
+
+            // Agregar el ID del usuario actual
+            $validated['seller_id'] = auth()->id();
+
+            // Asegurar que is_active tenga un valor por defecto
+            if (!isset($validated['is_active'])) {
+                $validated['is_active'] = true;
+            }
+
+            try {
+                // Crear el anuncio
+                $listing = \App\Models\Listing::create($validated);
+
+                return redirect()->route('user.dashboard')
+                    ->with('message', 'Anuncio creado correctamente.');
+            } catch (\Exception $e) {
+                \Log::error('Error al crear anuncio: ' . $e->getMessage());
+                return back()->withErrors(['general' => 'Hubo un error al crear el anuncio.']);
+            }
+        })->name('listings.store');
+
+        // Nueva ruta para editar anuncios
+        Route::put('listings/{listing}', function (Illuminate\Http\Request $request, App\Models\Listing $listing) {
+            // Verificar que el usuario es propietario del anuncio
+            if ($listing->seller_id !== auth()->id()) {
+                abort(403, 'No tienes permiso para modificar este anuncio.');
+            }
+
+            $validated = $request->validate([
+                'tractor_id' => ['required', 'exists:tractors,id'],
+                'type' => ['required', 'string', 'in:sale,rental'],
+                'price' => ['required', 'numeric', 'min:0'],
+                'description' => ['nullable', 'string'],
+                'is_active' => ['boolean'],
+                'start_date' => ['nullable', 'date', 'required_if:type,rental'],
+                'end_date' => ['nullable', 'date', 'required_if:type,rental', 'after_or_equal:start_date'],
+            ]);
+
+            // Verificar que el usuario es propietario del tractor
+            $tractor = \App\Models\Tractor::find($validated['tractor_id']);
+            if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
+                return back()->withErrors(['tractor_id' => 'No tienes permiso para usar este tractor.']);
+            }
+
+            $listing->update($validated);
+
+            return back()->with('message', 'Anuncio actualizado correctamente.');
+        })->name('listings.update');
+
+        // Ruta para eliminar un anuncio
+        Route::delete('listings/{listing}', function (App\Models\Listing $listing) {
+            // Verificar que el usuario es propietario del anuncio
+            if ($listing->seller_id !== auth()->id()) {
+                abort(403, 'No tienes permiso para eliminar este anuncio.');
+            }
+
+            $listing->delete();
+
+            return redirect()->route('user.dashboard')
+                ->with('message', 'Anuncio eliminado correctamente.');
+        })->name('listings.destroy');
+
+        // Ruta para activar/desactivar un anuncio
+        Route::put('listings/{listing}/toggle-status', function (App\Models\Listing $listing) {
+            // Verificar que el usuario es propietario del anuncio
+            if ($listing->seller_id !== auth()->id()) {
+                abort(403, 'No tienes permiso para modificar este anuncio.');
+            }
+
+            // Cambiar el estado
+            $listing->update([
+                'is_active' => !$listing->is_active
+            ]);
+
+            return back()->with('message', 'El estado del anuncio se ha actualizado correctamente.');
+        })->name('listings.toggle-status');
+
         // Rutas para tractores
         Route::get('tractors', function () {
             return Inertia::render('User/Tractors/Index', [
@@ -495,36 +609,50 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('aperos', function () {
             $user = auth()->user();
 
-            // Obtener aperos del usuario a través de la relación con tractores
-            $aperos = \App\Models\Apero::whereHas('tractors', function ($query) use ($user) {
+            // Obtener todos los aperos que pertenecen al usuario
+            // mediante la relación directa 'user_id' y también los que están conectados a sus tractores
+            $aperosByUserId = \App\Models\Apero::where('user_id', $user->id)->get();
+
+            $aperosByTractors = \App\Models\Apero::whereHas('tractors', function ($query) use ($user) {
                 $query->whereHas('owners', function ($ownerQuery) use ($user) {
                     $ownerQuery->where('user_id', $user->id);
                 });
-            })->with([
-                        'tractors' => function ($query) use ($user) {
-                            $query->whereHas('owners', function ($ownerQuery) use ($user) {
-                                $ownerQuery->where('user_id', $user->id);
-                            });
-                        }
-                    ])->get();
+            })->get();
+
+            // Combinar ambos conjuntos y eliminar duplicados
+            $aperos = $aperosByUserId->merge($aperosByTractors)->unique('id');
+
+            // Cargar las relaciones de tractores para los aperos
+            $aperoIds = $aperos->pluck('id')->toArray();
+            $aperos = \App\Models\Apero::whereIn('id', $aperoIds)
+                ->with([
+                    'tractors' => function ($query) use ($user) {
+                        $query->whereHas('owners', function ($ownerQuery) use ($user) {
+                            $ownerQuery->where('user_id', $user->id);
+                        });
+                    }
+                ])->get();
 
             return Inertia::render('User/Aperos/Index', [
                 'aperos' => $aperos
             ]);
         })->name('aperos.index');
 
+        // Ruta para ver un apero específico - versión corregida para permitir ver aperos propios
         Route::get('aperos/{apero}', function (App\Models\Apero $apero) {
             $user = auth()->user();
 
-            // Verificar que el usuario tiene acceso a este apero a través de sus tractores
-            $hasAccess = $apero->tractors()->whereHas('owners', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })->exists();
+            // Verificar que el usuario es propietario del apero o tiene acceso a través de sus tractores
+            $hasAccess = $apero->user_id === $user->id ||
+                $apero->tractors()->whereHas('owners', function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })->exists();
 
             if (!$hasAccess) {
                 abort(403, 'No tienes permiso para ver este apero.');
             }
 
+            // Cargar las relaciones de tractores
             $apero->load([
                 'tractors' => function ($query) use ($user) {
                     $query->whereHas('owners', function ($ownerQuery) use ($user) {
@@ -538,7 +666,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ]);
         })->name('aperos.show');
 
-        // Ruta para crear un nuevo apero (actualizada con imágenes)
+        // Ruta para crear un nuevo apero (actualizada para que tractor_id sea opcional y añadiendo user_id)
         Route::post('aperos', function (Illuminate\Http\Request $request) {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
@@ -547,15 +675,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'model' => 'nullable|string|max:255',
                 'year' => 'nullable|integer',
                 'description' => 'nullable|string',
-                'tractor_id' => 'required|exists:tractors,id',
-                'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'], // 2MB max
+                'tractor_id' => 'nullable|exists:tractors,id', // Ahora es nullable
+                'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
             ]);
-
-            // Verificar que el tractor pertenece al usuario
-            $tractor = \App\Models\Tractor::findOrFail($validated['tractor_id']);
-            if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
-                abort(403, 'No tienes permiso para usar este tractor.');
-            }
 
             // Manejar la subida de imagen
             if ($request->hasFile('image')) {
@@ -563,7 +685,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 $validated['image'] = $imagePath;
             }
 
-            // Crear apero
+            // Crear apero con el ID del usuario actual
             $apero = \App\Models\Apero::create([
                 'name' => $validated['name'],
                 'type' => $validated['type'] ?? null,
@@ -573,13 +695,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'description' => $validated['description'] ?? null,
                 'is_available' => true,
                 'image' => $validated['image'] ?? null,
+                'user_id' => auth()->id(), // Añadir el ID del usuario autenticado
             ]);
 
-            // Conectar al tractor
-            $tractor->aperos()->attach($apero->id, ['attached_at' => now()]);
+            // Conectar al tractor si se proporcionó un tractor_id
+            if (!empty($validated['tractor_id'])) {
+                $tractor = \App\Models\Tractor::findOrFail($validated['tractor_id']);
 
-            return redirect()->route('user.dashboard')->with('message', 'Apero creado y conectado correctamente.');
-        })->name('user.aperos.store');
+                // Verificar que el tractor pertenece al usuario
+                if ($tractor->owners()->where('user_id', auth()->id())->exists()) {
+                    $tractor->aperos()->attach($apero->id, ['attached_at' => now()]);
+                }
+            }
+
+            return redirect()->route('user.dashboard')->with('message', 'Apero creado correctamente.');
+        })->name('aperos.store');
 
         // Ruta para editar un apero existente (actualizada con imágenes)
         Route::put('aperos/{apero}', function (Illuminate\Http\Request $request, \App\Models\Apero $apero) {
@@ -590,15 +720,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'model' => 'nullable|string|max:255',
                 'year' => 'nullable|integer',
                 'description' => 'nullable|string',
-                'tractor_id' => 'required|exists:tractors,id',
+                'tractor_id' => 'nullable|exists:tractors,id', // Cambiado a nullable
                 'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
                 'remove_image' => ['nullable', 'boolean'], // Para eliminar imagen existente
             ]);
 
-            // Verificar que el usuario tiene permiso sobre el tractor
-            $tractor = \App\Models\Tractor::findOrFail($validated['tractor_id']);
-            if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
-                abort(403, 'No tienes permiso para usar este tractor.');
+            // Si se proporcionó un tractor_id, verificar que el usuario tiene permiso sobre el tractor
+            if (!empty($validated['tractor_id'])) {
+                $tractor = \App\Models\Tractor::findOrFail($validated['tractor_id']);
+                if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
+                    abort(403, 'No tienes permiso para usar este tractor.');
+                }
             }
 
             // Manejar la imagen
@@ -613,11 +745,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 if ($apero->image) {
                     Storage::delete($apero->image);
                 }
-                
+
                 // Subir nueva imagen
                 $imagePath = $request->file('image')->store('aperos', 'public');
                 $validated['image'] = $imagePath;
             }
+
+            // Guardar el tractor_id antes de removerlo de los datos validados
+            $tractorId = $validated['tractor_id'] ?? null;
 
             // Remover campos que no van al modelo
             unset($validated['tractor_id'], $validated['remove_image']);
@@ -625,11 +760,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // Actualizar campos del apero
             $apero->update($validated);
 
-            // Sincronizar relación si es necesario
-            $currentTractorId = $apero->tractors()->first()?->id;
-            if ($currentTractorId && $currentTractorId !== $tractor->id) {
-                $apero->tractors()->detach();
-                $tractor->aperos()->attach($apero->id, ['attached_at' => now()]);
+            // Manejar la relación con el tractor si se proporcionó uno
+            if ($tractorId) {
+                $tractor = \App\Models\Tractor::findOrFail($tractorId);
+
+                // Verificar si ya existe una conexión con este tractor
+                $existingConnection = $apero->tractors()
+                    ->where('tractor_id', $tractorId)
+                    ->wherePivot('detached_at', null)
+                    ->exists();
+
+                if (!$existingConnection) {
+                    // Conectar el apero al tractor
+                    $tractor->aperos()->attach($apero->id, ['attached_at' => now()]);
+                }
             }
 
             return redirect()->route('user.dashboard')->with('message', 'Apero actualizado correctamente.');
@@ -657,6 +801,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'aperos' => $availableAperos
             ]);
         })->name('aperos.available-for-tractor');
+
+        // Ruta para obtener todos los tractores del usuario (API)
+        Route::get('api/tractors', function () {
+            $user = auth()->user();
+            $tractors = $user->tractors()->latest()->get();
+
+            return response()->json([
+                'tractors' => $tractors
+            ]);
+        })->name('api.tractors');
 
         // Ruta para conectar/desconectar aperos a tractores del usuario
         Route::post('tractors/{tractor}/attach-apero', function (App\Models\Tractor $tractor, Illuminate\Http\Request $request) {
@@ -719,93 +873,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return back()->with('message', 'Apero desconectado del tractor correctamente.');
         })->name('tractors.detach-apero');
 
-        // Rutas de anuncios
-        Route::get('listings', [ListingController::class, 'index'])->name('listings.index');
-        Route::get('listings/sales', [ListingController::class, 'sales'])->name('listings.sales');
-        Route::get('listings/rentals', [ListingController::class, 'rentals'])->name('listings.rentals');
-        Route::get('listings/{listing}', [ListingController::class, 'show'])->name('listings.show');
-
-        // Ruta para crear anuncios
-        Route::post('listings', function (Illuminate\Http\Request $request) {
-            $validated = $request->validate([
-                'tractor_id' => ['required', 'exists:tractors,id'],
-                'type' => ['required', 'string', 'in:sale,rental'],
-                'price' => ['required', 'numeric', 'min:0'],
-                'description' => ['nullable', 'string'],
-                'is_active' => ['boolean'],
-                'start_date' => ['nullable', 'date', 'required_if:type,rental'],
-                'end_date' => ['nullable', 'date', 'required_if:type,rental', 'after_or_equal:start_date'],
-            ]);
-
-            // Verificar que el usuario es propietario del tractor
-            $tractor = \App\Models\Tractor::find($validated['tractor_id']);
-            if (!$tractor) {
-                return back()->withErrors(['tractor_id' => 'El tractor seleccionado no existe.']);
-            }
-
-            // Verificar si el usuario posee el tractor
-            if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
-                return back()->withErrors(['tractor_id' => 'No tienes permiso para publicar este tractor.']);
-            }
-
-            // Verificar que no hay otro anuncio activo para el mismo tractor
-            $existingActiveListing = \App\Models\Listing::where('tractor_id', $validated['tractor_id'])
-                ->where('is_active', true)
-                ->first();
-
-            if ($existingActiveListing) {
-                return back()->withErrors(['tractor_id' => 'Ya existe un anuncio activo para este tractor.']);
-            }
-
-            // Agregar el ID del usuario actual
-            $validated['seller_id'] = auth()->id();
-
-            // Asegurar que is_active tenga un valor por defecto
-            if (!isset($validated['is_active'])) {
-                $validated['is_active'] = true;
-            }
-
-            try {
-                // Crear el anuncio
-                $listing = \App\Models\Listing::create($validated);
-
-                return redirect()->route('user.dashboard')
-                    ->with('message', 'Anuncio creado correctamente.');
-            } catch (\Exception $e) {
-                \Log::error('Error al crear anuncio: ' . $e->getMessage());
-                return back()->withErrors(['general' => 'Hubo un error al crear el anuncio.']);
-            }
-        })->name('listings.store');
-
-        // Nueva ruta para editar anuncios
-        Route::put('listings/{listing}', function (Illuminate\Http\Request $request, App\Models\Listing $listing) {
-            // Verificar que el usuario es propietario del anuncio
-            if ($listing->seller_id !== auth()->id()) {
-                abort(403, 'No tienes permiso para modificar este anuncio.');
-            }
-
-            $validated = $request->validate([
-                'tractor_id' => ['required', 'exists:tractors,id'],
-                'type' => ['required', 'string', 'in:sale,rental'],
-                'price' => ['required', 'numeric', 'min:0'],
-                'description' => ['nullable', 'string'],
-                'is_active' => ['boolean'],
-                'start_date' => ['nullable', 'date', 'required_if:type,rental'],
-                'end_date' => ['nullable', 'date', 'required_if:type,rental', 'after_or_equal:start_date'],
-            ]);
-
-            // Verificar que el usuario es propietario del tractor
-            $tractor = \App\Models\Tractor::find($validated['tractor_id']);
-            if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
-                return back()->withErrors(['tractor_id' => 'No tienes permiso para usar este tractor.']);
-            }
-
-            $listing->update($validated);
-
-            return back()->with('message', 'Anuncio actualizado correctamente.');
-        })->name('listings.update');
-
-        // Rutas de solicitudes
+        // Rutas para solicitudes
         Route::get('requests', [RequestController::class, 'index'])->name('requests.index');
 
         // Modificada la ruta para crear solicitudes (corregido el error con el campo 'type')
@@ -855,22 +923,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('requests.store');
 
         Route::get('requests/{request}', [RequestController::class, 'show'])->name('requests.show');
-        Route::patch('requests/{request}/cancel', [RequestController::class, 'cancel'])->name('requests.cancel');
-
-        // Ruta para activar/desactivar un anuncio
-        Route::put('listings/{listing}/toggle-status', function (App\Models\Listing $listing) {
-            // Verificar que el usuario es propietario del anuncio
-            if ($listing->seller_id !== auth()->id()) {
-                abort(403, 'No tienes permiso para modificar este anuncio.');
-            }
-
-            // Cambiar el estado
-            $listing->update([
-                'is_active' => !$listing->is_active
-            ]);
-
-            return back()->with('message', 'El estado del anuncio se ha actualizado correctamente.');
-        })->name('listings.toggle-status');
 
         // Rutas para aceptar/rechazar/completar solicitudes
         Route::put('requests/{request}/accept', function (App\Models\Request $request) {
@@ -940,18 +992,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return back()->with('message', 'Solicitud marcada como completada correctamente.');
         })->name('requests.complete');
 
-        // Ruta para eliminar un anuncio
-        Route::delete('listings/{listing}', function (App\Models\Listing $listing) {
-            // Verificar que el usuario es propietario del anuncio
-            if ($listing->seller_id !== auth()->id()) {
-                abort(403, 'No tienes permiso para eliminar este anuncio.');
-            }
-
-            $listing->delete();
-
-            return redirect()->route('user.dashboard')
-                ->with('message', 'Anuncio eliminado correctamente.');
-        })->name('listings.destroy');
+        Route::patch('requests/{request}/cancel', [RequestController::class, 'cancel'])->name('requests.cancel');
 
         // Ruta para eliminar una solicitud
         Route::delete('requests/{request}', function (App\Models\Request $request) {

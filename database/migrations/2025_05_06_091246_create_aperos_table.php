@@ -20,6 +20,8 @@ return new class extends Migration
             $table->string('model')->nullable();
             $table->integer('year')->nullable();
             $table->boolean('is_available')->default(true);
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('image')->nullable();
             $table->timestamps();
         });
         

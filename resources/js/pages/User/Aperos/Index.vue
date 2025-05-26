@@ -232,7 +232,7 @@
                   <select 
                     id="type" 
                     v-model="createForm.type"
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
                   >
                     <option value="">Seleccionar tipo...</option>
                     <option value="Arado">Arado</option>
@@ -250,13 +250,12 @@
                 
                 <div>
                   <label for="tractor_id" class="block text-sm font-medium text-gray-700 mb-1">
-                    Conectar a Tractor *
+                    Conectar a Tractor (opcional)
                   </label>
                   <select 
                     id="tractor_id" 
                     v-model="createForm.tractor_id"
-                    required
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
                   >
                     <option value="">Seleccionar tractor...</option>
                     <option 
@@ -449,12 +448,6 @@ const closeCreateModal = () => {
 };
 
 const createApero = () => {
-  // Validar que se haya seleccionado un tractor
-  if (!createForm.tractor_id) {
-    alert('Por favor selecciona un tractor para conectar el apero.');
-    return;
-  }
-
   // Crear FormData para manejar la subida de archivos
   const formData = new FormData();
   
