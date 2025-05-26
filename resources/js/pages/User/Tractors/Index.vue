@@ -51,30 +51,38 @@
               <div 
                 v-for="tractor in tractors" 
                 :key="tractor.id"
-                class="bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
+                class="bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
               >
+                <!-- Imagen del tractor -->
+                <div class="relative h-48 bg-gray-100">
+                  <img 
+                    v-if="tractor.image_url" 
+                    :src="tractor.image_url" 
+                    :alt="`${tractor.brand || 'Tractor'} ${tractor.model || ''}`"
+                    class="w-full h-full object-cover"
+                  />
+                  <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-100 to-green-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-green-400" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19 8h-2c0-.6-.4-1-1-1h-2c-.6 0-1 .4-1 1h-2c-1.7 0-3 1.3-3 3v3c0 1.7 1.3 3 3 3h8c1.7 0 3-1.3 3-3v-3c0-1.7-1.3-3-3-3zm-2 9c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3zM5 11c-1.7 0-3 1.3-3 3s1.3 3 3 3 3-1.3 3-3-1.3-3-3-3z"/>
+                    </svg>
+                  </div>
+                  
+                  <!-- Badge de estado superpuesto -->
+                  <span 
+                    :class="tractor.is_available ? 'bg-green-500 text-white' : 'bg-red-500 text-white'"
+                    class="absolute top-2 right-2 px-2 py-1 text-xs font-medium rounded-full"
+                  >
+                    {{ tractor.is_available ? 'Disponible' : 'No disponible' }}
+                  </span>
+                </div>
+
                 <div class="p-6">
                   <!-- Encabezado del tractor -->
-                  <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center space-x-3">
-                      <div class="bg-green-100 p-2 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M19 8h-2c0-.6-.4-1-1-1h-2c-.6 0-1 .4-1 1h-2c-1.7 0-3 1.3-3 3v3c0 1.7 1.3 3 3 3h8c1.7 0 3-1.3 3-3v-3c0-1.7-1.3-3-3-3zm-2 9c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3zM5 11c-1.7 0-3 1.3-3 3s1.3 3 3 3 3-1.3 3-3-1.3-3-3-3z"/>
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 class="text-lg font-semibold text-gray-900">
-                          {{ tractor.brand || 'Tractor' }} {{ tractor.model || `#${tractor.id}` }}
-                        </h3>
-                        <p v-if="tractor.year" class="text-sm text-gray-600">Año {{ tractor.year }}</p>
-                      </div>
-                    </div>
-                    <span 
-                      :class="tractor.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                      class="px-2 py-1 text-xs font-medium rounded-full"
-                    >
-                      {{ tractor.is_available ? 'Disponible' : 'No disponible' }}
-                    </span>
+                  <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                      {{ tractor.brand || 'Tractor' }} {{ tractor.model || `#${tractor.id}` }}
+                    </h3>
+                    <p v-if="tractor.year" class="text-sm text-gray-600">Año {{ tractor.year }}</p>
                   </div>
 
                   <!-- Información del tractor -->
@@ -90,16 +98,6 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       {{ tractor.working_hours }} horas
-                    </div>
-                    <div v-if="tractor.license_plate" class="flex items-center text-sm text-gray-600">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                      </svg>
-                      {{ tractor.license_plate }}
-                    </div>
-                    <div v-if="tractor.color" class="flex items-center text-sm text-gray-600">
-                      <div class="h-4 w-4 mr-2 rounded-full border border-gray-300" :style="{ backgroundColor: tractor.color }"></div>
-                      {{ tractor.color }}
                     </div>
                   </div>
 
@@ -170,7 +168,38 @@
           </div>
           <h3 class="text-lg font-medium text-gray-900 text-center mt-4">Agregar Nuevo Tractor</h3>
           <div class="mt-6">
-            <form @submit.prevent="createTractor" class="space-y-4">
+            <form @submit.prevent="createTractor" class="space-y-4" enctype="multipart/form-data">
+              <!-- Campo de imagen -->
+              <div>
+                <label for="image" class="block text-sm font-medium text-gray-700 mb-1">
+                  Imagen del Tractor
+                </label>
+                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-green-400 transition-colors">
+                  <div class="space-y-1 text-center">
+                    <div v-if="imagePreview" class="mb-4">
+                      <img :src="imagePreview" alt="Preview" class="mx-auto h-32 w-32 object-cover rounded-lg" />
+                    </div>
+                    <svg v-else class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <div class="flex text-sm text-gray-600">
+                      <label for="image" class="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-green-500">
+                        <span>{{ imagePreview ? 'Cambiar imagen' : 'Subir una imagen' }}</span>
+                        <input 
+                          id="image" 
+                          @change="handleImageChange"
+                          type="file" 
+                          accept="image/*"
+                          class="sr-only"
+                        />
+                      </label>
+                      <p class="pl-1">o arrastrar y soltar</p>
+                    </div>
+                    <p class="text-xs text-gray-500">PNG, JPG, GIF hasta 2MB</p>
+                  </div>
+                </div>
+              </div>
+
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label for="brand" class="block text-sm font-medium text-gray-700 mb-1">
@@ -263,7 +292,7 @@
               <div class="flex items-center justify-end space-x-3 pt-4">
                 <button 
                   type="button"
-                  @click="showCreateModal = false"
+                  @click="closeCreateModal"
                   class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 >
                   Cancelar
@@ -300,10 +329,15 @@ defineProps<{
     license_plate?: string;
     color?: string;
     is_available: boolean;
+    image?: string;
+    image_url?: string;
   }>;
 }>();
 
 const showCreateModal = ref(false);
+const imagePreview = ref<string | null>(null);
+const selectedImage = ref<File | null>(null);
+
 const createForm = reactive({
   brand: '',
   model: '',
@@ -312,22 +346,65 @@ const createForm = reactive({
   horsepower: null,
   working_hours: null,
   is_available: true,
+  image: null as File | null,
 });
 
+const handleImageChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  
+  if (file) {
+    selectedImage.value = file;
+    createForm.image = file;
+    
+    // Crear preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imagePreview.value = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+const closeCreateModal = () => {
+  showCreateModal.value = false;
+  imagePreview.value = null;
+  selectedImage.value = null;
+  
+  // Reset form
+  Object.keys(createForm).forEach(key => {
+    if (key === 'is_available') {
+      createForm[key] = true;
+    } else if (typeof createForm[key] === 'number') {
+      createForm[key] = null;
+    } else {
+      createForm[key] = key === 'image' ? null : '';
+    }
+  });
+};
+
 const createTractor = () => {
-  router.post(route('user.tractors.store'), createForm, {
+  // Crear FormData para manejar la subida de archivos
+  const formData = new FormData();
+  
+  // Agregar todos los campos del formulario
+  Object.keys(createForm).forEach(key => {
+    if (createForm[key] !== null && createForm[key] !== '') {
+      if (key === 'image' && selectedImage.value) {
+        formData.append(key, selectedImage.value);
+      } else if (key === 'is_available') {
+        // Convertir explícitamente a boolean y luego a string para FormData
+        formData.append(key, createForm[key] ? '1' : '0');
+      } else if (key !== 'image') {
+        formData.append(key, createForm[key]);
+      }
+    }
+  });
+
+  router.post(route('user.tractors.store'), formData, {
+    forceFormData: true,
     onSuccess: () => {
-      showCreateModal.value = false;
-      // Reset form
-      Object.keys(createForm).forEach(key => {
-        if (key === 'is_available') {
-          createForm[key] = true;
-        } else if (typeof createForm[key] === 'number') {
-          createForm[key] = null;
-        } else {
-          createForm[key] = '';
-        }
-      });
+      closeCreateModal();
     },
     onError: (errors) => {
       console.error('Error al crear tractor:', errors);
@@ -342,12 +419,10 @@ const deleteTractor = (tractor) => {
     router.delete(route('user.tractors.destroy', tractor.id), {
       preserveScroll: true,
       onSuccess: (page) => {
-        // La página se recarga automáticamente con Inertia
         console.log('Tractor eliminado exitosamente');
       },
       onError: (errors) => {
         console.error('Error al eliminar tractor:', errors);
-        // Los errores se muestran automáticamente a través de flash messages
       },
       onFinish: () => {
         console.log('Operación de eliminación finalizada');

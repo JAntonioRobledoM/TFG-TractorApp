@@ -50,6 +50,31 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <!-- Información principal -->
               <div class="lg:col-span-2 space-y-6">
+                <!-- Imagen del tractor -->
+                <div v-if="tractor.image_url" class="bg-gray-50 rounded-lg p-6">
+                  <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Imagen del Tractor
+                  </h2>
+                  <div class="relative">
+                    <img 
+                      :src="tractor.image_url" 
+                      :alt="`${tractor.brand || 'Tractor'} ${tractor.model || ''}`"
+                      class="w-full h-64 md:h-80 object-cover rounded-lg shadow-md"
+                    />
+                    <button 
+                      @click="showImageModal = true"
+                      class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
                 <!-- Detalles del tractor -->
                 <div class="bg-gray-50 rounded-lg p-6">
                   <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
@@ -105,20 +130,6 @@
                       >
                         Actualizar
                       </button>
-                    </div>
-                    
-                    <div v-if="tractor.license_plate" class="flex items-center space-x-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                      </svg>
-                      <span class="text-sm font-medium text-gray-600">Matrícula:</span>
-                      <span class="text-sm text-gray-900">{{ tractor.license_plate }}</span>
-                    </div>
-                    
-                    <div v-if="tractor.color" class="flex items-center space-x-2">
-                      <div class="h-5 w-5 rounded-full border border-gray-300" :style="{ backgroundColor: tractor.color }"></div>
-                      <span class="text-sm font-medium text-gray-600">Color:</span>
-                      <span class="text-sm text-gray-900">{{ tractor.color }}</span>
                     </div>
                     
                     <div class="flex items-center space-x-2">
@@ -321,6 +332,25 @@
       </div>
     </div>
 
+    <!-- Modal para ver imagen en tamaño completo -->
+    <div v-if="showImageModal && tractor.image_url" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+      <div class="relative max-w-4xl max-h-full">
+        <button 
+          @click="showImageModal = false"
+          class="absolute -top-10 right-0 text-white hover:text-gray-300 z-10"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <img 
+          :src="tractor.image_url" 
+          :alt="`${tractor.brand || 'Tractor'} ${tractor.model || ''}`"
+          class="max-w-full max-h-full object-contain rounded-lg"
+        />
+      </div>
+    </div>
+
     <!-- Modal para actualizar horas de trabajo -->
     <div v-if="showHoursModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
@@ -443,14 +473,59 @@
           </div>
           <h3 class="text-lg font-medium text-gray-900 text-center mt-4">Editar Tractor</h3>
           <div class="mt-6">
-            <form @submit.prevent="updateTractor" class="space-y-4">
+            <form @submit.prevent="updateTractor" class="space-y-4" enctype="multipart/form-data">
+              <!-- Campo de imagen -->
+              <div>
+                <label for="edit_image" class="block text-sm font-medium text-gray-700 mb-1">
+                  Imagen del Tractor
+                </label>
+                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-green-400 transition-colors">
+                  <div class="space-y-1 text-center">
+                    <div v-if="editImagePreview || tractor.image_url" class="mb-4">
+                      <img 
+                        :src="editImagePreview || tractor.image_url" 
+                        alt="Preview" 
+                        class="mx-auto h-32 w-32 object-cover rounded-lg" 
+                      />
+                      <div v-if="tractor.image_url && !editImagePreview" class="mt-2">
+                        <label class="inline-flex items-center">
+                          <input 
+                            v-model="editForm.remove_image"
+                            type="checkbox"
+                            class="rounded border-gray-300 text-red-600 shadow-sm focus:ring-red-500"
+                          />
+                          <span class="ml-2 text-sm text-red-600">Eliminar imagen actual</span>
+                        </label>
+                      </div>
+                    </div>
+                    <svg v-else class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <div class="flex text-sm text-gray-600">
+                      <label for="edit_image" class="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-green-500">
+                        <span>{{ editImagePreview || tractor.image_url ? 'Cambiar imagen' : 'Subir una imagen' }}</span>
+                        <input 
+                          id="edit_image" 
+                          @change="handleEditImageChange"
+                          type="file" 
+                          accept="image/*"
+                          class="sr-only"
+                        />
+                      </label>
+                      <p class="pl-1">o arrastrar y soltar</p>
+                    </div>
+                    <p class="text-xs text-gray-500">PNG, JPG, GIF hasta 2MB</p>
+                  </div>
+                </div>
+              </div>
+
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label for="brand" class="block text-sm font-medium text-gray-700 mb-1">
+                  <label for="edit_brand" class="block text-sm font-medium text-gray-700 mb-1">
                     Marca
                   </label>
                   <input 
-                    id="brand" 
+                    id="edit_brand" 
                     v-model="editForm.brand"
                     type="text"
                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
@@ -458,11 +533,11 @@
                   />
                 </div>
                 <div>
-                  <label for="model" class="block text-sm font-medium text-gray-700 mb-1">
+                  <label for="edit_model" class="block text-sm font-medium text-gray-700 mb-1">
                     Modelo
                   </label>
                   <input 
-                    id="model" 
+                    id="edit_model" 
                     v-model="editForm.model"
                     type="text"
                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
@@ -470,11 +545,11 @@
                   />
                 </div>
                 <div>
-                  <label for="year" class="block text-sm font-medium text-gray-700 mb-1">
+                  <label for="edit_year" class="block text-sm font-medium text-gray-700 mb-1">
                     Año
                   </label>
                   <input 
-                    id="year" 
+                    id="edit_year" 
                     v-model="editForm.year"
                     type="number"
                     min="1900"
@@ -484,11 +559,11 @@
                   />
                 </div>
                 <div>
-                  <label for="horsepower" class="block text-sm font-medium text-gray-700 mb-1">
+                  <label for="edit_horsepower" class="block text-sm font-medium text-gray-700 mb-1">
                     Potencia (HP)
                   </label>
                   <input 
-                    id="horsepower" 
+                    id="edit_horsepower" 
                     v-model="editForm.horsepower"
                     type="number"
                     min="0"
@@ -497,11 +572,11 @@
                   />
                 </div>
                 <div>
-                  <label for="working_hours" class="block text-sm font-medium text-gray-700 mb-1">
+                  <label for="edit_working_hours" class="block text-sm font-medium text-gray-700 mb-1">
                     Horas de trabajo
                   </label>
                   <input 
-                    id="working_hours" 
+                    id="edit_working_hours" 
                     v-model="editForm.working_hours"
                     type="number"
                     min="0"
@@ -522,11 +597,11 @@
                 </div>
               </div>
               <div>
-                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+                <label for="edit_description" class="block text-sm font-medium text-gray-700 mb-1">
                   Descripción
                 </label>
                 <textarea 
-                  id="description" 
+                  id="edit_description" 
                   v-model="editForm.description"
                   rows="3"
                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
@@ -536,7 +611,7 @@
               <div class="flex items-center justify-end space-x-3 pt-4">
                 <button 
                   type="button"
-                  @click="showEditModal = false"
+                  @click="closeEditModal"
                   class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 >
                   Cancelar
@@ -573,6 +648,8 @@ const props = defineProps<{
     license_plate?: string;
     color?: string;
     is_available: boolean;
+    image?: string;
+    image_url?: string;
     aperos?: Array<{
       id: number;
       name: string;
@@ -594,6 +671,10 @@ const props = defineProps<{
 const showConnectAperoModal = ref(false);
 const showHoursModal = ref(false);
 const showEditModal = ref(false);
+const showImageModal = ref(false);
+const editImagePreview = ref<string | null>(null);
+const selectedEditImage = ref<File | null>(null);
+
 const connectAperoForm = reactive({
   apero_id: ''
 });
@@ -607,7 +688,9 @@ const editForm = reactive({
   description: props.tractor.description || '',
   horsepower: props.tractor.horsepower || null,
   working_hours: props.tractor.working_hours || 0,
-  is_available: props.tractor.is_available
+  is_available: props.tractor.is_available,
+  image: null as File | null,
+  remove_image: false
 });
 
 const availableAperos = ref(props.availableAperos || []);
@@ -631,6 +714,41 @@ onMounted(async () => {
 // Funciones
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('es-ES');
+};
+
+const handleEditImageChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  
+  if (file) {
+    selectedEditImage.value = file;
+    editForm.image = file;
+    editForm.remove_image = false;
+    
+    // Crear preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      editImagePreview.value = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+const closeEditModal = () => {
+  showEditModal.value = false;
+  editImagePreview.value = null;
+  selectedEditImage.value = null;
+  
+  // Reset form to original values
+  editForm.brand = props.tractor.brand || '';
+  editForm.model = props.tractor.model || '';
+  editForm.year = props.tractor.year || null;
+  editForm.description = props.tractor.description || '';
+  editForm.horsepower = props.tractor.horsepower || null;
+  editForm.working_hours = props.tractor.working_hours || 0;
+  editForm.is_available = props.tractor.is_available;
+  editForm.image = null;
+  editForm.remove_image = false;
 };
 
 const connectApero = () => {
@@ -675,9 +793,25 @@ const updateHours = () => {
 
 // Función para actualizar el tractor completo
 const updateTractor = () => {
-  router.put(route('user.tractors.update', props.tractor.id), editForm, {
+  // Crear FormData para manejar la subida de archivos
+  const formData = new FormData();
+  
+  // Agregar todos los campos del formulario
+  Object.keys(editForm).forEach(key => {
+    if (key === 'image' && selectedEditImage.value) {
+      formData.append(key, selectedEditImage.value);
+    } else if (key !== 'image' && editForm[key] !== null && editForm[key] !== '') {
+      formData.append(key, editForm[key]);
+    }
+  });
+
+  // Agregar el método PUT para Laravel
+  formData.append('_method', 'PUT');
+
+  router.post(route('user.tractors.update', props.tractor.id), formData, {
+    forceFormData: true,
     onSuccess: () => {
-      showEditModal.value = false;
+      closeEditModal();
     },
     onError: (errors) => {
       console.error('Error al actualizar tractor:', errors);

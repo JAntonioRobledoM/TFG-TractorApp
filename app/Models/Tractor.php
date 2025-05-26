@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Tractor extends Model
 {
@@ -24,6 +25,7 @@ class Tractor extends Model
         'horsepower',
         'working_hours',
         'is_available',
+        'image',
     ];
 
     /**
@@ -37,6 +39,13 @@ class Tractor extends Model
         'working_hours' => 'decimal:2',
         'is_available' => 'boolean',
     ];
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['image_url'];
 
     /**
      * Get the users that own this tractor.
@@ -62,5 +71,31 @@ class Tractor extends Model
         return $this->belongsToMany(Apero::class)
             ->withTimestamps()
             ->withPivot('attached_at', 'detached_at');
+    }
+
+    /**
+     * Get the full URL for the tractor image.
+     */
+    public function getImageUrlAttribute()
+    {
+        if ($this->image) {
+            return Storage::url($this->image);
+        }
+        
+        return null;
+    }
+
+    /**
+     * Delete the tractor image when the model is deleted.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($tractor) {
+            if ($tractor->image) {
+                Storage::delete($tractor->image);
+            }
+        });
     }
 }

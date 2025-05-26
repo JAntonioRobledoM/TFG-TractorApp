@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 // Importar controladores desde el namespace Admin
@@ -121,6 +122,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
                         'working_hours' => $tractor->working_hours,
                         'is_available' => $tractor->is_available,
                         'description' => $tractor->description,
+                        'image' => $tractor->image,
+                        'image_url' => $tractor->image_url,
                     ];
                 }),
 
@@ -135,11 +138,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     return [
                         'id' => $apero->id,
                         'name' => $apero->name,
+                        'type' => $apero->type,
                         'brand' => $apero->brand,
                         'model' => $apero->model,
                         'year' => $apero->year,
                         'description' => $apero->description,
                         'is_available' => $apero->is_available,
+                        'image' => $apero->image,
+                        'image_url' => $apero->image_url,
                     ];
                 }),
 
@@ -165,6 +171,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                             'model' => $listing->tractor->model,
                             'year' => $listing->tractor->year,
                             'horsepower' => $listing->tractor->horsepower,
+                            'image_url' => $listing->tractor->image_url,
                         ] : null,
                         // Cargar solicitudes recibidas para este anuncio
                         'requests' => $listing->requests()
@@ -237,6 +244,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                         'brand' => $listing->tractor->brand,
                         'model' => $listing->tractor->model,
                         'year' => $listing->tractor->year,
+                        'image_url' => $listing->tractor->image_url,
                     ] : null,
                     'seller' => $listing->seller ? [
                         'id' => $listing->seller->id,
@@ -282,6 +290,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     'horsepower' => $listing->tractor->horsepower,
                     'working_hours' => $listing->tractor->working_hours,
                     'description' => $listing->tractor->description,
+                    'image_url' => $listing->tractor->image_url,
                 ] : null,
                 'requests' => $listing->requests->map(function ($request) {
                     return [
@@ -356,6 +365,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ]);
         })->name('tractors.show');
 
+        // Ruta para crear tractores (actualizada con imágenes)
         Route::post('tractors', function (Illuminate\Http\Request $request) {
             $validated = $request->validate([
                 'brand' => ['nullable', 'string', 'max:255'],
@@ -364,8 +374,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'description' => ['nullable', 'string'],
                 'horsepower' => ['nullable', 'integer'],
                 'working_hours' => ['nullable', 'numeric'],
-                'is_available' => ['boolean'],
+                'is_available' => ['nullable', 'in:0,1,true,false'], // Permitir valores múltiples
+                'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
             ]);
+
+            // Convertir is_available a boolean
+            $validated['is_available'] = filter_var($validated['is_available'] ?? true, FILTER_VALIDATE_BOOLEAN);
+
+            // Manejar la subida de imagen
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('tractors', 'public');
+                $validated['image'] = $imagePath;
+            }
 
             // Crear el tractor
             $tractor = \App\Models\Tractor::create($validated);
@@ -377,7 +397,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->with('message', 'Tractor creado correctamente.');
         })->name('tractors.store');
 
-        // Nueva ruta para editar tractores
+        // Ruta para actualizar tractores (actualizada con imágenes)
         Route::put('tractors/{tractor}', function (Illuminate\Http\Request $request, App\Models\Tractor $tractor) {
             // Verificar que el usuario es propietario del tractor
             if (!$tractor->owners()->where('user_id', auth()->id())->exists()) {
@@ -391,8 +411,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'description' => ['nullable', 'string'],
                 'horsepower' => ['nullable', 'integer'],
                 'working_hours' => ['nullable', 'numeric'],
-                'is_available' => ['boolean'],
+                'is_available' => ['nullable', 'in:0,1,true,false'], // Permitir valores múltiples
+                'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+                'remove_image' => ['nullable', 'boolean'],
             ]);
+
+            // Convertir is_available a boolean
+            $validated['is_available'] = filter_var($validated['is_available'] ?? $tractor->is_available, FILTER_VALIDATE_BOOLEAN);
+
+            // Manejar la imagen
+            if ($request->has('remove_image') && $request->remove_image) {
+                // Eliminar imagen existente
+                if ($tractor->image) {
+                    Storage::delete($tractor->image);
+                    $validated['image'] = null;
+                }
+            } elseif ($request->hasFile('image')) {
+                // Eliminar imagen anterior si existe
+                if ($tractor->image) {
+                    Storage::delete($tractor->image);
+                }
+
+                // Subir nueva imagen
+                $imagePath = $request->file('image')->store('tractors', 'public');
+                $validated['image'] = $imagePath;
+            }
+
+            // Remover el campo remove_image de los datos validados
+            unset($validated['remove_image']);
 
             $tractor->update($validated);
 
@@ -492,14 +538,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ]);
         })->name('aperos.show');
 
-        // Ruta para crear un nuevo apero
+        // Ruta para crear un nuevo apero (actualizada con imágenes)
         Route::post('aperos', function (Illuminate\Http\Request $request) {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
+                'type' => 'nullable|string|max:255',
                 'brand' => 'nullable|string|max:255',
                 'model' => 'nullable|string|max:255',
                 'year' => 'nullable|integer',
+                'description' => 'nullable|string',
                 'tractor_id' => 'required|exists:tractors,id',
+                'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'], // 2MB max
             ]);
 
             // Verificar que el tractor pertenece al usuario
@@ -508,13 +557,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 abort(403, 'No tienes permiso para usar este tractor.');
             }
 
+            // Manejar la subida de imagen
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('aperos', 'public');
+                $validated['image'] = $imagePath;
+            }
+
             // Crear apero
             $apero = \App\Models\Apero::create([
                 'name' => $validated['name'],
+                'type' => $validated['type'] ?? null,
                 'brand' => $validated['brand'] ?? null,
                 'model' => $validated['model'] ?? null,
                 'year' => $validated['year'] ?? null,
+                'description' => $validated['description'] ?? null,
                 'is_available' => true,
+                'image' => $validated['image'] ?? null,
             ]);
 
             // Conectar al tractor
@@ -523,14 +581,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return redirect()->route('user.dashboard')->with('message', 'Apero creado y conectado correctamente.');
         })->name('user.aperos.store');
 
-        // Ruta para editar un apero existente
+        // Ruta para editar un apero existente (actualizada con imágenes)
         Route::put('aperos/{apero}', function (Illuminate\Http\Request $request, \App\Models\Apero $apero) {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
+                'type' => 'nullable|string|max:255',
                 'brand' => 'nullable|string|max:255',
                 'model' => 'nullable|string|max:255',
                 'year' => 'nullable|integer',
+                'description' => 'nullable|string',
                 'tractor_id' => 'required|exists:tractors,id',
+                'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+                'remove_image' => ['nullable', 'boolean'], // Para eliminar imagen existente
             ]);
 
             // Verificar que el usuario tiene permiso sobre el tractor
@@ -539,13 +601,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 abort(403, 'No tienes permiso para usar este tractor.');
             }
 
+            // Manejar la imagen
+            if ($request->has('remove_image') && $request->remove_image) {
+                // Eliminar imagen existente
+                if ($apero->image) {
+                    Storage::delete($apero->image);
+                    $validated['image'] = null;
+                }
+            } elseif ($request->hasFile('image')) {
+                // Eliminar imagen anterior si existe
+                if ($apero->image) {
+                    Storage::delete($apero->image);
+                }
+                
+                // Subir nueva imagen
+                $imagePath = $request->file('image')->store('aperos', 'public');
+                $validated['image'] = $imagePath;
+            }
+
+            // Remover campos que no van al modelo
+            unset($validated['tractor_id'], $validated['remove_image']);
+
             // Actualizar campos del apero
-            $apero->update([
-                'name' => $validated['name'],
-                'brand' => $validated['brand'],
-                'model' => $validated['model'],
-                'year' => $validated['year'],
-            ]);
+            $apero->update($validated);
 
             // Sincronizar relación si es necesario
             $currentTractorId = $apero->tractors()->first()?->id;
@@ -556,7 +634,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             return redirect()->route('user.dashboard')->with('message', 'Apero actualizado correctamente.');
         })->name('aperos.update');
-
 
         // API para obtener aperos disponibles para un tractor
         Route::get('aperos/available-for-tractor/{tractor}', function (App\Models\Tractor $tractor) {
@@ -890,7 +967,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('requests.destroy');
     });
 
-        Route::prefix('chat')->name('chat.')->group(function () {
+    Route::prefix('chat')->name('chat.')->group(function () {
         Route::get('/conversations', [ChatController::class, 'getUserConversations'])->name('conversations');
         Route::get('/request/{request}/conversation', [ChatController::class, 'getOrCreateConversation'])->name('request.conversation');
         Route::get('/conversations/{conversation}/messages', [ChatController::class, 'getMessages'])->name('conversation.messages');

@@ -1,9 +1,9 @@
 <template>
-  <AppLayout>
+  <UserLayout>
     <Head :title="`Apero: ${apero.name}`" />
 
     <div class="py-12 bg-gradient-to-br from-green-50 to-yellow-50 min-h-screen">
-      <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+      <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
         <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
           <!-- Header -->
           <div class="bg-gradient-to-r from-green-600 to-green-700 px-6 py-8">
@@ -48,6 +48,31 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <!-- Información principal -->
               <div class="lg:col-span-2 space-y-6">
+                <!-- Imagen del apero -->
+                <div v-if="apero.image_url" class="bg-gray-50 rounded-lg p-6">
+                  <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Imagen del Apero
+                  </h2>
+                  <div class="relative">
+                    <img 
+                      :src="apero.image_url" 
+                      :alt="apero.name"
+                      class="w-full h-64 md:h-80 object-cover rounded-lg shadow-md"
+                    />
+                    <button 
+                      @click="showImageModal = true"
+                      class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
                 <!-- Detalles del apero -->
                 <div class="bg-gray-50 rounded-lg p-6">
                   <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
@@ -80,6 +105,14 @@
                       </svg>
                       <span class="text-sm font-medium text-gray-600">Año:</span>
                       <span class="text-sm text-gray-900">{{ apero.year }}</span>
+                    </div>
+                    
+                    <div v-if="apero.type" class="flex items-center space-x-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                      </svg>
+                      <span class="text-sm font-medium text-gray-600">Tipo:</span>
+                      <span class="text-sm text-gray-900">{{ apero.type }}</span>
                     </div>
                     
                     <div class="flex items-center space-x-2">
@@ -225,12 +258,32 @@
         </div>
       </div>
     </div>
-  </AppLayout>
+
+    <!-- Modal para ver imagen en tamaño completo -->
+    <div v-if="showImageModal && apero.image_url" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+      <div class="relative max-w-4xl max-h-full">
+        <button 
+          @click="showImageModal = false"
+          class="absolute -top-10 right-0 text-white hover:text-gray-300 z-10"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <img 
+          :src="apero.image_url" 
+          :alt="apero.name"
+          class="max-w-full max-h-full object-contain rounded-lg"
+        />
+      </div>
+    </div>
+  </UserLayout>
 </template>
 
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import UserLayout from '@/Layouts/UserLayout.vue';
+import { ref } from 'vue';
 
 defineProps<{
   apero: {
@@ -242,6 +295,8 @@ defineProps<{
     model?: string;
     year?: number;
     is_available: boolean;
+    image?: string;
+    image_url?: string;
     tractors?: Array<{
       id: number;
       brand?: string;
@@ -250,4 +305,6 @@ defineProps<{
     }>;
   };
 }>();
+
+const showImageModal = ref(false);
 </script>
