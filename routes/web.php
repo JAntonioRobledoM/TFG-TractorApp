@@ -1014,6 +1014,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/conversations/{conversation}/messages', [ChatController::class, 'getMessages'])->name('conversation.messages');
         Route::post('/conversations/{conversation}/messages', [ChatController::class, 'sendMessage'])->name('conversation.send');
     });
+
+    // Rutas para PayPal
+    Route::prefix('paypal')->name('paypal.')->middleware('auth')->group(function () {
+        Route::get('config', [App\Http\Controllers\PayPalController::class, 'getConfig'])->name('config');
+        Route::post('payments', [App\Http\Controllers\PayPalController::class, 'storePayment'])->name('store');
+        Route::get('payments/request/{requestId}', [App\Http\Controllers\PayPalController::class, 'getPaymentForRequest'])->name('request.payment');
+    });
 });
 
 // Rutas que requieren autenticación Y rol de administrador
