@@ -27,10 +27,12 @@ class ListingController extends Controller
      */
     public function create()
     {
-        $tractors = Tractor::all();
+        $tractors = Tractor::with('owners')->get();
+        $users = User::all();
         
         return Inertia::render('Admin/Listings/Create', [
-            'tractors' => $tractors
+            'tractors' => $tractors,
+            'users' => $users // AGREGADO para poder seleccionar vendedor
         ]);
     }
 
@@ -49,6 +51,20 @@ class ListingController extends Controller
             'start_date' => ['nullable', 'date', 'required_if:type,rental'],
             'end_date' => ['nullable', 'date', 'required_if:type,rental', 'after_or_equal:start_date'],
         ]);
+
+        // Verificar que no hay otro anuncio activo para el mismo tractor
+        $existingActiveListing = Listing::where('tractor_id', $validated['tractor_id'])
+            ->where('is_active', true)
+            ->first();
+
+        if ($existingActiveListing) {
+            return back()->withErrors(['tractor_id' => 'Ya existe un anuncio activo para este tractor.']);
+        }
+
+        // Asegurar que is_active tenga un valor por defecto
+        if (!isset($validated['is_active'])) {
+            $validated['is_active'] = true;
+        }
 
         $listing = Listing::create($validated);
 
@@ -75,11 +91,13 @@ class ListingController extends Controller
      */
     public function edit(Listing $listing)
     {
-        $tractors = Tractor::all();
+        $tractors = Tractor::with('owners')->get();
+        $users = User::all();
         
         return Inertia::render('Admin/Listings/Edit', [
             'listing' => $listing,
-            'tractors' => $tractors
+            'tractors' => $tractors,
+            'users' => $users // AGREGADO para poder cambiar vendedor
         ]);
     }
 
@@ -98,6 +116,16 @@ class ListingController extends Controller
             'start_date' => ['nullable', 'date', 'required_if:type,rental'],
             'end_date' => ['nullable', 'date', 'required_if:type,rental', 'after_or_equal:start_date'],
         ]);
+
+        // Verificar que no hay otro anuncio activo para el mismo tractor (excluyendo el actual)
+        $existingActiveListing = Listing::where('tractor_id', $validated['tractor_id'])
+            ->where('is_active', true)
+            ->where('id', '!=', $listing->id)
+            ->first();
+
+        if ($existingActiveListing) {
+            return back()->withErrors(['tractor_id' => 'Ya existe otro anuncio activo para este tractor.']);
+        }
 
         $listing->update($validated);
 

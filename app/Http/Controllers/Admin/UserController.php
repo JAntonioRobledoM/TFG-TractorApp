@@ -43,14 +43,13 @@ class UserController extends Controller
             'dni' => ['nullable', 'string', 'max:20'],
             'tlf' => ['nullable', 'numeric'],
             'pass' => ['required', 'string', 'min:8'],
-            'email' => ['nullable', 'string', 'email', 'max:255', 'unique:users'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'], // CAMBIADO: required
             'is_admin' => ['nullable', 'boolean'],
             'pfp' => ['nullable', 'string', 'max:255'],
         ]);
 
         // Hash password
         $validated['pass'] = Hash::make($validated['pass']); 
-        unset($validated['password']); 
 
         $user = User::create($validated);
 
@@ -133,17 +132,17 @@ class UserController extends Controller
             'last_name' => ['required', 'string', 'max:255'],
             'dni' => ['nullable', 'string', 'max:20'],
             'tlf' => ['nullable', 'numeric'],
-            'email' => ['nullable', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)], // CAMBIADO: required
             'is_admin' => ['nullable', 'boolean'],
             'pfp' => ['nullable', 'string', 'max:255'],
         ]);
 
         // Update password if provided
-        if ($request->filled('password')) { // Changed from 'pass' to 'password'
+        if ($request->filled('password')) {
             $request->validate([
-                'password' => ['string', 'min:8'], // Changed from 'pass' to 'password'
+                'password' => ['string', 'min:8'],
             ]);
-            $validated['pass'] = Hash::make($request->password); // Store hashed password in 'pass' field
+            $validated['pass'] = Hash::make($request->password);
         }
 
         $user->update($validated);

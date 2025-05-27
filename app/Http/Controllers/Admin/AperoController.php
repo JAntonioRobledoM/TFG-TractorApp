@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Apero;
 use App\Models\Tractor;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
-
 
 class AperoController extends Controller
 {
@@ -15,7 +16,7 @@ class AperoController extends Controller
      */
     public function index()
     {
-        $aperos = Apero::all();
+        $aperos = Apero::with('user')->get();
         return Inertia::render('Admin/Aperos/Index', [
             'aperos' => $aperos
         ]);
@@ -26,7 +27,10 @@ class AperoController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Admin/Aperos/Create');
+        $users = User::all();
+        return Inertia::render('Admin/Aperos/Create', [
+            'users' => $users
+        ]);
     }
 
     /**
@@ -42,7 +46,15 @@ class AperoController extends Controller
             'model' => ['nullable', 'string', 'max:255'],
             'year' => ['nullable', 'integer'],
             'is_available' => ['nullable', 'boolean'],
+            'user_id' => ['nullable', 'exists:users,id'], // AGREGADO
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'], // AGREGADO
         ]);
+
+        // Manejar la subida de imagen
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('aperos', 'public');
+            $validated['image'] = $imagePath;
+        }
 
         $apero = Apero::create($validated);
 
@@ -55,7 +67,7 @@ class AperoController extends Controller
      */
     public function show(Apero $apero)
     {
-        $apero->load(['tractors']);
+        $apero->load(['tractors', 'user']);
         
         return Inertia::render('Admin/Aperos/Show', [
             'apero' => $apero
@@ -67,8 +79,10 @@ class AperoController extends Controller
      */
     public function edit(Apero $apero)
     {
+        $users = User::all();
         return Inertia::render('Admin/Aperos/Edit', [
-            'apero' => $apero
+            'apero' => $apero,
+            'users' => $users
         ]);
     }
 
@@ -85,7 +99,31 @@ class AperoController extends Controller
             'model' => ['nullable', 'string', 'max:255'],
             'year' => ['nullable', 'integer'],
             'is_available' => ['nullable', 'boolean'],
+            'user_id' => ['nullable', 'exists:users,id'], // AGREGADO
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'], // AGREGADO
+            'remove_image' => ['nullable', 'boolean'], // AGREGADO
         ]);
+
+        // Manejar la imagen
+        if ($request->has('remove_image') && $request->remove_image) {
+            // Eliminar imagen existente
+            if ($apero->image) {
+                Storage::delete($apero->image);
+                $validated['image'] = null;
+            }
+        } elseif ($request->hasFile('image')) {
+            // Eliminar imagen anterior si existe
+            if ($apero->image) {
+                Storage::delete($apero->image);
+            }
+
+            // Subir nueva imagen
+            $imagePath = $request->file('image')->store('aperos', 'public');
+            $validated['image'] = $imagePath;
+        }
+
+        // Remover el campo remove_image de los datos validados
+        unset($validated['remove_image']);
 
         $apero->update($validated);
 

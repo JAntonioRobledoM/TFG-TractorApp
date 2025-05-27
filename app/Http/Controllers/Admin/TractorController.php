@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Tractor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use App\Models\User;
 use Illuminate\Validation\Rule;
@@ -16,7 +17,7 @@ class TractorController extends Controller
      */
     public function index()
     {
-        $tractors = Tractor::all();
+        $tractors = Tractor::with('owners')->get();
         return Inertia::render('Admin/Tractors/Index', [
             'tractors' => $tractors
         ]);
@@ -39,18 +40,24 @@ class TractorController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'brand' => ['nullable', 'string', 'max:255'], // MOVIDO ARRIBA
             'model' => ['nullable', 'string', 'max:255'],
             'year' => ['nullable', 'integer'],
             'description' => ['nullable', 'string'],
-            'field_2' => ['nullable', 'numeric'],
-            'brand' => ['nullable', 'string', 'max:255'],
             'license_plate' => ['nullable', 'string', 'unique:tractors'], 
             'color' => ['nullable', 'string', 'max:255'],
             'horsepower' => ['nullable', 'integer'],
             'working_hours' => ['nullable', 'numeric'],
             'is_available' => ['nullable', 'boolean'], 
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'], // AGREGADO
             'users' => ['nullable', 'array']
         ]);
+
+        // Manejar la subida de imagen
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('tractors', 'public');
+            $validated['image'] = $imagePath;
+        }
 
         $tractor = Tractor::create($validated);
 
@@ -68,7 +75,7 @@ class TractorController extends Controller
      */
     public function show(Tractor $tractor)
     {
-        $tractor->load(['owners', 'listings', 'aperos']); // Changed users to owners to match model relationship name
+        $tractor->load(['owners', 'listings', 'aperos']);
         
         return Inertia::render('Admin/Tractors/Show', [
             'tractor' => $tractor
@@ -81,7 +88,7 @@ class TractorController extends Controller
     public function edit(Tractor $tractor)
     {
         $availableUsers = User::all();
-        $tractor->load('owners'); // Changed users to owners to match model relationship name
+        $tractor->load('owners');
         return Inertia::render('Admin/Tractors/Edit', [
             'tractor' => $tractor,
             'availableUsers' => $availableUsers
@@ -94,24 +101,46 @@ class TractorController extends Controller
     public function update(Request $request, Tractor $tractor)
     {
         $validated = $request->validate([
+            'brand' => ['nullable', 'string', 'max:255'], // MOVIDO ARRIBA
             'model' => ['nullable', 'string', 'max:255'],
             'year' => ['nullable', 'integer'],
             'description' => ['nullable', 'string'],
-            'field_2' => ['nullable', 'numeric'],
-            'brand' => ['nullable', 'string', 'max:255'], // Added field
-            'license_plate' => ['nullable', 'string', Rule::unique('tractors')->ignore($tractor->id)], // Added field
-            'color' => ['nullable', 'string', 'max:255'], // Added field
-            'horsepower' => ['nullable', 'integer'], // Added field
-            'working_hours' => ['nullable', 'numeric'], // Added field
-            'is_available' => ['nullable', 'boolean'], // Added field
+            'license_plate' => ['nullable', 'string', Rule::unique('tractors')->ignore($tractor->id)],
+            'color' => ['nullable', 'string', 'max:255'],
+            'horsepower' => ['nullable', 'integer'],
+            'working_hours' => ['nullable', 'numeric'],
+            'is_available' => ['nullable', 'boolean'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'], // AGREGADO
+            'remove_image' => ['nullable', 'boolean'], // AGREGADO
             'users' => ['nullable', 'array']
         ]);
+
+        // Manejar la imagen
+        if ($request->has('remove_image') && $request->remove_image) {
+            // Eliminar imagen existente
+            if ($tractor->image) {
+                Storage::delete($tractor->image);
+                $validated['image'] = null;
+            }
+        } elseif ($request->hasFile('image')) {
+            // Eliminar imagen anterior si existe
+            if ($tractor->image) {
+                Storage::delete($tractor->image);
+            }
+
+            // Subir nueva imagen
+            $imagePath = $request->file('image')->store('tractors', 'public');
+            $validated['image'] = $imagePath;
+        }
+
+        // Remover el campo remove_image de los datos validados
+        unset($validated['remove_image']);
 
         $tractor->update($validated);
 
         // Sincronizar usuarios
         if (isset($validated['users'])) {
-            $tractor->owners()->sync($validated['users']); // Changed users to owners to match model relationship name
+            $tractor->owners()->sync($validated['users']);
         }
 
         return redirect()->route('tractors.index')
