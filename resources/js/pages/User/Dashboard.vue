@@ -34,18 +34,6 @@
                         </div>
                     </div>
 
-                    <!-- Sección DEBUG (temporal) -->
-                    <div class="mb-4 rounded border border-yellow-400 bg-yellow-100 p-4">
-                        <h3 class="font-bold text-yellow-800">DEBUG INFO:</h3>
-                        <p class="text-yellow-700">Anuncios recibidos: {{ userListings?.length || 0 }}</p>
-                        <div v-if="userListings && userListings.length > 0" class="text-xs text-yellow-600">
-                            <div v-for="(listing, index) in userListings" :key="index">
-                                Anuncio {{ index + 1 }}: {{ listing.tractor?.brand || 'Sin marca' }} {{ listing.tractor?.model || 'Sin modelo' }} -
-                                {{ listing.price }}€
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Secciones principales -->
                     <div class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
                         <!-- Mis Tractores -->
