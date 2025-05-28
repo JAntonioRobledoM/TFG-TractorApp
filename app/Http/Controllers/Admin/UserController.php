@@ -8,6 +8,7 @@ use App\Models\Tractor;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
@@ -43,13 +44,19 @@ class UserController extends Controller
             'dni' => ['nullable', 'string', 'max:20'],
             'tlf' => ['nullable', 'numeric'],
             'pass' => ['required', 'string', 'min:8'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'], // CAMBIADO: required
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'is_admin' => ['nullable', 'boolean'],
-            'pfp' => ['nullable', 'string', 'max:255'],
+            'pfp' => ['nullable', 'image', 'max:2048'], // Cambiado: ahora acepta imágenes
         ]);
 
         // Hash password
         $validated['pass'] = Hash::make($validated['pass']); 
+
+        // Manejo de la imagen de perfil
+        if ($request->hasFile('pfp')) {
+            $path = $request->file('pfp')->store('profile_images', 'public');
+            $validated['pfp'] = $path;
+        }
 
         $user = User::create($validated);
 
@@ -132,10 +139,21 @@ class UserController extends Controller
             'last_name' => ['required', 'string', 'max:255'],
             'dni' => ['nullable', 'string', 'max:20'],
             'tlf' => ['nullable', 'numeric'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)], // CAMBIADO: required
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'is_admin' => ['nullable', 'boolean'],
-            'pfp' => ['nullable', 'string', 'max:255'],
+            'pfp' => ['nullable', 'image', 'max:2048'], // Cambiado: ahora acepta imágenes
         ]);
+
+        // Manejo de la imagen de perfil
+        if ($request->hasFile('pfp')) {
+            // Eliminar imagen anterior si existe
+            if ($user->pfp && Storage::disk('public')->exists($user->pfp)) {
+                Storage::disk('public')->delete($user->pfp);
+            }
+            
+            $path = $request->file('pfp')->store('profile_images', 'public');
+            $validated['pfp'] = $path;
+        }
 
         // Update password if provided
         if ($request->filled('password')) {
@@ -156,6 +174,11 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
+        // Eliminar imagen de perfil si existe
+        if ($user->pfp && Storage::disk('public')->exists($user->pfp)) {
+            Storage::disk('public')->delete($user->pfp);
+        }
+        
         $user->delete();
 
         return redirect()->route('users.index')

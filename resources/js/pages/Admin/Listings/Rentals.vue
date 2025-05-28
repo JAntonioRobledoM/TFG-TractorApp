@@ -5,12 +5,29 @@
         <h1 class="text-2xl font-bold text-green-800">Anuncios de Alquiler</h1>
         <div class="flex space-x-2">
           <Link :href="route('listings.index')" class="text-gray-600 hover:text-gray-900 px-4 py-2 rounded">
-          Todos los Anuncios
+            Todos los Anuncios
+          </Link>
+          <Link :href="route('listings.sales')" class="text-blue-600 hover:text-blue-900 px-4 py-2 rounded">
+            Ver Ventas
           </Link>
           <Link :href="route('listings.create')"
             class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
-          Nuevo Anuncio
+            Nuevo Anuncio
           </Link>
+        </div>
+      </div>
+
+      <!-- Flash message -->
+      <div v-if="$page.props.flash && $page.props.flash.message" class="bg-green-100 border-l-4 border-green-600 text-green-700 p-4 mb-4 rounded-md">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm">{{ $page.props.flash.message }}</p>
+          </div>
         </div>
       </div>
 
@@ -63,15 +80,26 @@
               Mostrando {{ listings.length }} anuncios activos
             </p>
           </div>
-          <div class="relative">
-            <input type="text" v-model="searchQuery" placeholder="Buscar..."
-              class="pl-8 pr-4 py-2 border rounded-md w-64 text-gray-800" />
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-2 top-3 text-gray-400"
-              viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd"
-                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                clip-rule="evenodd" />
-            </svg>
+          <div class="flex space-x-2">
+            <div class="relative">
+              <input type="text" v-model="searchQuery" placeholder="Buscar..."
+                class="pl-8 pr-4 py-2 border rounded-md w-64 text-gray-800" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-2 top-3 text-gray-400"
+                viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd"
+                  d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                  clip-rule="evenodd" />
+              </svg>
+            </div>
+            
+            <!-- Filtro de disponibilidad -->
+            <select v-model="availabilityFilter" 
+              class="py-2 px-3 border rounded-md text-gray-800 bg-white">
+              <option value="all">Todas las fechas</option>
+              <option value="current">Disponibles ahora</option>
+              <option value="future">Disponibles próximamente</option>
+              <option value="past">Finalizados</option>
+            </select>
           </div>
         </div>
 
@@ -99,9 +127,14 @@
                       {{ listing.tractor && listing.tractor.year ? 'Año: ' + listing.tractor.year : 'Sin año' }}
                     </p>
                   </div>
-                  <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
-                    Alquiler
-                  </span>
+                  <div class="flex flex-col items-end">
+                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
+                      Alquiler
+                    </span>
+                    <span v-if="!listing.is_active" class="mt-1 px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                      Inactivo
+                    </span>
+                  </div>
                 </div>
 
                 <div class="bg-yellow-50 rounded p-2 mb-2">
@@ -118,14 +151,24 @@
                   </div>
                 </div>
 
+                <div v-if="listing.description" class="mt-2 text-sm text-gray-600 line-clamp-2">
+                  {{ listing.description }}
+                </div>
+
                 <div class="flex justify-between items-center mt-4">
                   <div class="text-2xl font-bold text-green-700">
                     {{ formatCurrency(listing.price) }}
                   </div>
-                  <Link :href="route('listings.show', listing.id)"
-                    class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
-                  Ver detalle
-                  </Link>
+                  <div class="flex space-x-1">
+                    <Link :href="route('listings.show', listing.id)"
+                      class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
+                      Ver detalle
+                    </Link>
+                    <Link :href="route('listings.edit', listing.id)"
+                      class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                      Editar
+                    </Link>
+                  </div>
                 </div>
 
                 <div class="mt-3 pt-3 border-t border-green-100 text-gray-500 text-sm">
@@ -171,7 +214,7 @@
             <div class="mt-6">
               <Link :href="route('listings.create')"
                 class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
-              Crear nuevo anuncio
+                Crear nuevo anuncio
               </Link>
             </div>
           </div>
@@ -180,8 +223,8 @@
 
       <!-- Day Details Modal -->
       <div v-if="selectedDayRentals"
-  class="fixed inset-0 bg-green-900 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-  @click.self="closeDayModal">
+        class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        @click.self="closeDayModal">
         <div class="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto" @click.stop>
           <div class="p-6 border-b flex justify-between items-center">
             <h2 class="text-xl font-semibold text-green-800">
@@ -207,9 +250,14 @@
                     {{ listing.tractor && listing.tractor.year ? 'Año: ' + listing.tractor.year : 'Sin año' }}
                   </p>
                 </div>
-                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
-                  Alquiler
-                </span>
+                <div class="flex flex-col items-end">
+                  <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
+                    Alquiler
+                  </span>
+                  <span v-if="!listing.is_active" class="mt-1 px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                    Inactivo
+                  </span>
+                </div>
               </div>
 
               <div class="mt-2 bg-white rounded p-2">
@@ -229,6 +277,11 @@
                 </div>
               </div>
 
+              <div v-if="listing.description" class="mt-2 bg-white rounded p-2">
+                <p class="text-sm text-gray-600">Descripción</p>
+                <p class="text-sm">{{ listing.description }}</p>
+              </div>
+
               <div class="mt-3 flex justify-between items-center">
                 <div class="flex items-center text-sm text-gray-500">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -241,10 +294,16 @@
                       'Usuario #' + listing.seller_id }}
                   </span>
                 </div>
-                <Link :href="route('listings.show', listing.id)"
-                  class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
-                Ver detalle
-                </Link>
+                <div class="flex space-x-1">
+                  <Link :href="route('listings.show', listing.id)"
+                    class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
+                    Ver detalle
+                  </Link>
+                  <Link :href="route('listings.edit', listing.id)"
+                    class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                    Editar
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -271,6 +330,7 @@ const props = defineProps({
 });
 
 const searchQuery = ref('');
+const availabilityFilter = ref('all');
 const currentMonth = ref(new Date().getMonth());
 const currentYear = ref(new Date().getFullYear());
 const selectedDay = ref(null);
@@ -415,13 +475,40 @@ const nextMonth = () => {
 };
 
 const filteredListings = computed(() => {
+  if (!props.listings) return [];
+  
+  const today = new Date();
+  
+  // First filter by availability
+  let result = props.listings;
+  
+  if (availabilityFilter.value !== 'all') {
+    result = props.listings.filter(listing => {
+      if (!listing.start_date || !listing.end_date) return false;
+      
+      const startDate = new Date(listing.start_date);
+      const endDate = new Date(listing.end_date);
+      
+      if (availabilityFilter.value === 'current') {
+        return startDate <= today && endDate >= today;
+      } else if (availabilityFilter.value === 'future') {
+        return startDate > today;
+      } else if (availabilityFilter.value === 'past') {
+        return endDate < today;
+      }
+      
+      return true;
+    });
+  }
+  
+  // Then filter by search query
   if (!searchQuery.value) {
-    return props.listings;
+    return result;
   }
 
   const query = searchQuery.value.toLowerCase();
 
-  return props.listings.filter(listing => {
+  return result.filter(listing => {
     // Search by tractor model
     const tractorModel = listing.tractor && listing.tractor.model ?
       listing.tractor.model.toLowerCase() : '';
@@ -433,10 +520,15 @@ const filteredListings = computed(() => {
     // Search by seller name
     const sellerName = listing.seller ?
       `${listing.seller.first_name} ${listing.seller.last_name}`.toLowerCase() : '';
+      
+    // Search by description
+    const description = listing.description ? 
+      listing.description.toLowerCase() : '';
 
     return tractorModel.includes(query) ||
       tractorYear.includes(query) ||
-      sellerName.includes(query);
+      sellerName.includes(query) ||
+      description.includes(query);
   });
 });
 
