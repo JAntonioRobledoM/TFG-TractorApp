@@ -220,8 +220,4 @@ const confirmDelete = (tractorId) => {
 };
 </script>
 
-<style scoped>
-.overflow-x-auto {
-  overflow-x: auto;
-}
-</style>
+<style src="../../../../css/Admin/Tractors/tractor_index_style.css" scoped></style>

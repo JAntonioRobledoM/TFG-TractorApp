@@ -336,8 +336,4 @@
   };
   </script>
   
-  <style scoped>
-  .overflow-y-auto {
-    overflow-y: auto;
-  }
-  </style>
+<style src="../../../../css/Admin/Aperos/aperos_attachtractors_style.css" scoped></style>

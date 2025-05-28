@@ -1,0 +1,4 @@
+/* Asegura que el fondo sea blanco */
+body {
+  background-color: white;
+}

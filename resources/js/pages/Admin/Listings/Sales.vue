@@ -259,20 +259,4 @@ const formatDate = (dateString) => {
 };
 </script>
 
-<style scoped>
-.bg-gradient-to-b {
-  background-image: 
-    linear-gradient(to bottom, rgba(240, 253, 244, 0.95), rgba(220, 252, 231, 0.95)),
-    repeating-linear-gradient(
-      45deg,
-      rgba(34, 197, 94, 0.03) 0px,
-      rgba(34, 197, 94, 0.03) 10px,
-      transparent 10px,
-      transparent 20px
-    );
-}
-
-.shadow-lg {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-</style>
+<style src="../../../../css/Admin/Listings/listings_sales_style.css" scoped></style>

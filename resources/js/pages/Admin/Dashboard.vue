@@ -353,36 +353,4 @@ const component = {
 export default component;
 </script>
 
-<style scoped>
-/* Add subtle field texture to the background */
-.bg-gradient-to-b {
-    background-image: 
-        linear-gradient(to bottom, rgba(240, 253, 244, 0.95), rgba(220, 252, 231, 0.95)),
-        repeating-linear-gradient(
-            45deg,
-            rgba(34, 197, 94, 0.03) 0px,
-            rgba(34, 197, 94, 0.03) 10px,
-            transparent 10px,
-            transparent 20px
-        );
-}
-
-/* Add subtle pattern to the stat cards */
-.shadow-lg {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-/* Add tractor wheel pattern to borders */
-.border-t-4 {
-    border-top-width: 4px;
-}
-
-.border-l-4 {
-    border-left-width: 4px;
-}
-
-.hover\:bg-green-50:hover {
-    background-color: rgba(240, 253, 244, 0.9);
-    transition: background-color 0.2s ease-in-out;
-}
-</style>
+<style src="../../../css/Admin/dashboard_style.css" scoped></style>

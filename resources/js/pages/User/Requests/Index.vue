@@ -188,17 +188,4 @@ function cancelRequest(requestId) {
 }
 </script>
 
-<style scoped>
-/* Add subtle field texture to the background */
-.bg-gradient-to-b {
-  background-image: 
-    linear-gradient(to bottom, rgba(240, 253, 244, 0.95), rgba(220, 252, 231, 0.95)),
-    repeating-linear-gradient(
-      45deg,
-      rgba(34, 197, 94, 0.03) 0px,
-      rgba(34, 197, 94, 0.03) 10px,
-      transparent 10px,
-      transparent 20px
-    );
-}
-</style>
+<style src="../../../../css/User/requests_index_style.css" scoped></style>

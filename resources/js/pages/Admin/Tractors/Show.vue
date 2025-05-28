@@ -411,8 +411,4 @@ const getColorValue = (colorName) => {
 };
 </script>
 
-<style scoped>
-.aspect-square {
-  aspect-ratio: 1 / 1;
-}
-</style>
+<style src="../../../../css/Admin/Tractors/tractor_show_style.css" scoped></style>

@@ -455,12 +455,4 @@ const submit = () => {
 };
 </script>
 
-<style scoped>
-.aspect-square {
-  aspect-ratio: 1 / 1;
-}
-
-select[multiple] {
-  height: auto;
-}
-</style>
+<style src="../../../../css/Admin/Tractors/tractor_create_style.css" scoped></style>

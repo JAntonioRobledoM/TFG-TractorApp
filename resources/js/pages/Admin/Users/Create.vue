@@ -465,14 +465,4 @@ const submit = () => {
 };
 </script>
 
-<style scoped>
-/* Input focus styles */
-input:focus {
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
-}
-
-/* Checkbox custom styling */
-input[type="checkbox"] {
-  accent-color: #16a34a;
-}
-</style>
+<style src="../../../../css/Admin/Users/user_create_style.css" scoped></style>

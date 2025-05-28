@@ -272,8 +272,4 @@
   };
   </script>
   
-  <style scoped>
-  .aspect-square {
-    aspect-ratio: 1 / 1;
-  }
-  </style>
+<style src="../../../../css/Admin/Aperos/aperos_create_style.css" scoped></style>

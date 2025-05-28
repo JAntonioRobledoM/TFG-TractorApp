@@ -365,8 +365,4 @@ const removeTractor = (tractorId) => {
 };
 </script>
 
-<style scoped>
-.overflow-y-auto {
-  overflow-y: auto;
-}
-</style>
+<style src="../../../../css/Admin/Users/user_assigntractors_style.css" scoped></style>

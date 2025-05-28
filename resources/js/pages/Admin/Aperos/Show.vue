@@ -291,12 +291,4 @@
   };
   </script>
   
-  <style scoped>
-  .overflow-x-auto {
-    overflow-x: auto;
-  }
-  
-  .aspect-square {
-    aspect-ratio: 1 / 1;
-  }
-  </style>
+ <style src="../../../../css/Admin/Aperos/aperos_show_style.css" scoped></style>

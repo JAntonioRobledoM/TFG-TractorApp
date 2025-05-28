@@ -307,33 +307,4 @@ const removeTractor = (tractorId) => {
 };
 </script>
 
-<style scoped>
-/* Add subtle field texture to the grid background */
-.bg-white {
-    background-image: 
-        radial-gradient(circle at 10px 10px, rgba(34, 197, 94, 0.03) 2px, transparent 2px);
-    background-size: 20px 20px;
-}
-
-/* Add pattern to the card headers */
-.bg-yellow-50 {
-    background-image: 
-        linear-gradient(to bottom, rgba(254, 252, 232, 0.9), rgba(254, 252, 232, 0.9)),
-        repeating-linear-gradient(
-            45deg,
-            rgba(202, 138, 4, 0.05) 0px,
-            rgba(202, 138, 4, 0.05) 10px,
-            transparent 10px,
-            transparent 20px
-        );
-}
-
-/* Enhanced shadow for cards */
-.shadow-lg {
-    box-shadow: 0 10px 15px -3px rgba(202, 138, 4, 0.1), 0 4px 6px -2px rgba(202, 138, 4, 0.05);
-}
-
-.hover\:shadow-xl:hover {
-    box-shadow: 0 20px 25px -5px rgba(202, 138, 4, 0.1), 0 10px 10px -5px rgba(202, 138, 4, 0.04);
-}
-</style>
+<style src="../../../../css/Admin/Users/user_tractors_style.css" scoped></style>

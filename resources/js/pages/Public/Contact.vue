@@ -185,9 +185,4 @@ const submit = () => {
 };
 </script>
 
-<style>
-/* Asegura que el fondo sea blanco */
-body {
-  background-color: white;
-}
-</style>
+<style src="../../../css/Public/contact_style.css" scoped></style>

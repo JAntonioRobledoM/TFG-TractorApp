@@ -371,8 +371,4 @@
   };
   </script>
   
-  <style scoped>
-  .overflow-y-auto {
-    overflow-y: auto;
-  }
-  </style>
+<style src="../../../../css/Admin/Tractors/tractor_attachaperos_style.css" scoped></style>

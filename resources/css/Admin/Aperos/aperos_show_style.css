@@ -1,0 +1,7 @@
+  .overflow-x-auto {
+    overflow-x: auto;
+  }
+  
+  .aspect-square {
+    aspect-ratio: 1 / 1;
+  }
