@@ -25,10 +25,39 @@
             <div class="p-6">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <!-- Left column: Images -->
-                <div class="bg-gray-200 rounded-lg h-80 w-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M19 8h-2c0-.6-.4-1-1-1h-2c-.6 0-1 .4-1 1h-2c-1.7 0-3 1.3-3 3v3c0 1.7 1.3 3 3 3h8c1.7 0 3-1.3 3-3v-3c0-1.7-1.3-3-3-3zm-2 9c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3zM5 11c-1.7 0-3 1.3-3 3s1.3 3 3 3 3-1.3 3-3-1.3-3-3-3z"/>
-                  </svg>
+                <div class="relative">
+                  <!-- Imagen principal del tractor -->
+                  <div class="bg-gray-200 rounded-lg h-80 w-full overflow-hidden">
+                    <img 
+                      v-if="listing.tractor && listing.tractor.image_url" 
+                      :src="listing.tractor.image_url" 
+                      :alt="listing.tractor ? (listing.tractor.brand + ' ' + listing.tractor.model) : 'Tractor'"
+                      class="w-full h-full object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
+                      @click="openImageModal"
+                      @error="handleImageError"
+                    />
+                    <!-- Placeholder cuando no hay imagen -->
+                    <div 
+                      v-else 
+                      class="w-full h-full flex items-center justify-center bg-gray-200"
+                    >
+                      <div class="text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p class="text-gray-500 text-sm">Sin imagen disponible</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Botón para ver imagen completa (solo si hay imagen) -->
+                  <button 
+                    v-if="listing.tractor && listing.tractor.image_url"
+                    @click="openImageModal"
+                    class="absolute bottom-2 right-2 bg-black/50 text-white px-3 py-1 rounded-md text-sm hover:bg-black/70 transition-colors backdrop-blur-sm"
+                  >
+                    Ver imagen completa
+                  </button>
                 </div>
 
                 <!-- Right column: Info -->
@@ -170,7 +199,25 @@
                   :key="similar.id" 
                   class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition duration-200"
                 >
-                  <div class="h-36 bg-gray-200 relative">
+                  <div class="h-36 bg-gray-200 relative overflow-hidden">
+                    <!-- Imagen del tractor similar -->
+                    <img 
+                      v-if="similar.tractor && similar.tractor.image_url" 
+                      :src="similar.tractor.image_url" 
+                      :alt="similar.tractor ? (similar.tractor.brand + ' ' + similar.tractor.model) : 'Tractor'"
+                      class="w-full h-full object-cover"
+                      @error="handleImageError"
+                    />
+                    <!-- Placeholder para tractores similares sin imagen -->
+                    <div 
+                      v-else 
+                      class="w-full h-full flex items-center justify-center bg-gray-200"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    
                     <div class="absolute top-2 right-2 px-2 py-1 rounded text-xs font-bold"
                       :class="similar.type === 'sale' ? 'bg-blue-600 text-white' : 'bg-yellow-500 text-white'">
                       {{ similar.type === 'sale' ? 'Venta' : 'Alquiler' }}
@@ -196,6 +243,29 @@
           </div>
         </div>
       </div>
+
+      <!-- Modal para ver imagen completa -->
+      <div 
+        v-if="showImageModal" 
+        class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+        @click="closeImageModal"
+      >
+        <div class="relative max-w-4xl max-h-full">
+          <img 
+            :src="listing.tractor.image_url" 
+            :alt="listing.tractor ? (listing.tractor.brand + ' ' + listing.tractor.model) : 'Tractor'"
+            class="max-w-full max-h-full object-contain rounded-lg"
+          />
+          <button 
+            @click="closeImageModal"
+            class="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
     </UserLayout>
   </div>
 </template>
@@ -214,6 +284,7 @@ const page = usePage();
 
 const loading = ref(false);
 const similarListings = ref([]);
+const showImageModal = ref(false);
 
 const isOwnListing = computed(() => {
   if (!props.listing || !props.listing.seller || !props.listing.seller.id) return false;
@@ -260,6 +331,23 @@ function submitRequest() {
       loading.value = false;
     }
   });
+}
+
+function handleImageError(event) {
+  // Oculta la imagen rota y muestra el placeholder
+  event.target.style.display = 'none';
+}
+
+function openImageModal() {
+  showImageModal.value = true;
+  // Previene el scroll del body cuando el modal está abierto
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal() {
+  showImageModal.value = false;
+  // Restaura el scroll del body
+  document.body.style.overflow = 'auto';
 }
 </script>
 

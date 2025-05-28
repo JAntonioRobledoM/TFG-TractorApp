@@ -84,11 +84,33 @@
               class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-shadow duration-300"
             >
               <!-- Listing Card -->
-              <div class="h-48 bg-gray-200 relative">
-                <div class="absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-bold"
-                  :class="listing.type === 'sale' ? 'bg-blue-600 text-white' : 'bg-yellow-500 text-white'">
+              <div class="h-48 bg-gray-200 relative overflow-hidden">
+                <!-- Imagen del tractor -->
+                <img 
+                  v-if="listing.tractor && listing.tractor.image_url" 
+                  :src="listing.tractor.image_url" 
+                  :alt="getTractorName(listing)"
+                  class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                  @error="handleImageError"
+                />
+                <!-- Placeholder cuando no hay imagen -->
+                <div 
+                  v-else 
+                  class="w-full h-full flex items-center justify-center bg-gray-200"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                
+                <!-- Badge de tipo -->
+                <div class="absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm"
+                  :class="listing.type === 'sale' ? 'bg-blue-600/90 text-white' : 'bg-yellow-500/90 text-white'">
                   {{ listing.type === 'sale' ? 'Venta' : 'Alquiler' }}
                 </div>
+                
+                <!-- Overlay sutil para mejorar legibilidad del badge -->
+                <div class="absolute inset-0 bg-black/10"></div>
               </div>
               
               <div class="p-5">
@@ -248,6 +270,11 @@ function formatDate(dateString) {
   if (!dateString) return '';
   const date = new Date(dateString);
   return new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
+}
+
+function handleImageError(event) {
+  // Oculta la imagen rota y muestra el placeholder
+  event.target.style.display = 'none';
 }
 </script>
 
