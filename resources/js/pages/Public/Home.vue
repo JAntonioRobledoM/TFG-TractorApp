@@ -20,12 +20,20 @@
                   Conectamos agricultores y proveedores de maquinaria agrícola en una plataforma sencilla y segura.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4">
-                  <Link :href="route('register')" class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 transition duration-200">
-                    Regístrate Gratis
+                  <!-- Botón principal - Registro o Dashboard -->
+                  <Link 
+                    :href="isAuthenticated ? route('dashboard') : route('register')" 
+                    class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 transition duration-200"
+                  >
+                    {{ isAuthenticated ? 'Ir al Dashboard' : 'Regístrate Gratis' }}
                   </Link>
-                  <span class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-green-700 bg-green-100 hover:bg-green-200 transition duration-200 cursor-pointer">
+                  <!-- Botón secundario - Ver anuncios -->
+                  <Link 
+                    :href="route('user.listings.index')" 
+                    class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-green-700 bg-green-100 hover:bg-green-200 transition duration-200"
+                  >
                     Ver Anuncios
-                  </span>
+                  </Link>
                 </div>
               </div>
               <div class="bg-green-600 p-6 flex items-center justify-center">
@@ -52,9 +60,12 @@
               <p class="text-gray-600 mb-4">
                 Encuentra tractores de todas las marcas y potencias. Compra o alquila según tus necesidades.
               </p>
-              <span class="text-green-600 hover:text-green-800 font-medium cursor-pointer">
+              <Link 
+                :href="route('user.listings.index', { type: 'tractor' })" 
+                class="text-green-600 hover:text-green-800 font-medium cursor-pointer"
+              >
                 Ver tractores disponibles →
-              </span>
+              </Link>
             </div>
             
             <div class="bg-white overflow-hidden shadow-lg rounded-lg p-6 border-t-4 border-blue-600">
@@ -69,9 +80,12 @@
               <p class="text-gray-600 mb-4">
                 Amplia selección de aperos para todo tipo de labores agrícolas, con opciones de compra y alquiler.
               </p>
-              <span class="text-green-600 hover:text-green-800 font-medium cursor-pointer">
+              <Link 
+                :href="route('user.listings.index', { type: 'apero' })" 
+                class="text-green-600 hover:text-green-800 font-medium cursor-pointer"
+              >
                 Ver aperos disponibles →
-              </span>
+              </Link>
             </div>
             
             <div class="bg-white overflow-hidden shadow-lg rounded-lg p-6 border-t-4 border-yellow-600">
@@ -87,9 +101,12 @@
               <p class="text-gray-600 mb-4">
                 Explora anuncios de venta y alquiler de maquinaria agrícola, o publica los tuyos propios.
               </p>
-              <span class="text-green-600 hover:text-green-800 font-medium cursor-pointer">
+              <Link 
+                :href="route('user.listings.index')" 
+                class="text-green-600 hover:text-green-800 font-medium cursor-pointer"
+              >
                 Ver todos →
-              </span>
+              </Link>
             </div>
           </div>
 
@@ -102,9 +119,14 @@
                 <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span class="text-2xl font-bold text-green-600">1</span>
                 </div>
-                <h3 class="text-lg font-semibold text-green-800 mb-2">Regístrate</h3>
+                <h3 class="text-lg font-semibold text-green-800 mb-2">
+                  {{ isAuthenticated ? 'Explora' : 'Regístrate' }}
+                </h3>
                 <p class="text-gray-600">
-                  Crea una cuenta gratuita en nuestra plataforma para empezar a buscar o publicar maquinaria.
+                  {{ isAuthenticated 
+                    ? 'Busca entre miles de anuncios o publica tu propio equipo para venta o alquiler.' 
+                    : 'Crea una cuenta gratuita en nuestra plataforma para empezar a buscar o publicar maquinaria.' 
+                  }}
                 </p>
               </div>
               
@@ -112,9 +134,14 @@
                 <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span class="text-2xl font-bold text-green-600">2</span>
                 </div>
-                <h3 class="text-lg font-semibold text-green-800 mb-2">Encuentra o Publica</h3>
+                <h3 class="text-lg font-semibold text-green-800 mb-2">
+                  {{ isAuthenticated ? 'Publica o Solicita' : 'Encuentra o Publica' }}
+                </h3>
                 <p class="text-gray-600">
-                  Busca entre miles de anuncios o publica tu propio equipo para venta o alquiler.
+                  {{ isAuthenticated 
+                    ? 'Publica tus tractores y aperos, o solicita aquellos que necesites para tu trabajo.' 
+                    : 'Busca entre miles de anuncios o publica tu propio equipo para venta o alquiler.' 
+                  }}
                 </p>
               </div>
               
@@ -134,22 +161,48 @@
           <div class="bg-white overflow-hidden shadow-lg rounded-lg p-6 mb-8">
             <div class="flex justify-between items-center mb-6">
               <h2 class="text-2xl font-bold text-green-800">Últimos Anuncios</h2>
-              <span class="text-green-600 hover:text-green-800 font-medium cursor-pointer">
+              <Link 
+                :href="route('user.listings.index')" 
+                class="text-green-600 hover:text-green-800 font-medium"
+              >
                 Ver todos →
-              </span>
+              </Link>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div v-for="listing in latestListings" :key="listing.id" class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition duration-200">
-                <div class="h-48 bg-gray-200 relative">
-                  <div class="absolute top-2 right-2 px-2 py-1 rounded text-xs font-bold"
-                    :class="listing.type === 'sale' ? 'bg-blue-600 text-white' : 'bg-yellow-500 text-white'">
+                <!-- Imagen del tractor en últimos anuncios -->
+                <div class="h-48 bg-gray-200 relative overflow-hidden">
+                  <img 
+                    v-if="listing.tractor && listing.tractor.image_url" 
+                    :src="listing.tractor.image_url" 
+                    :alt="getTractorName(listing)"
+                    class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                    @error="handleImageError"
+                  />
+                  <!-- Placeholder cuando no hay imagen -->
+                  <div 
+                    v-else 
+                    class="w-full h-full flex items-center justify-center bg-gray-200"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  
+                  <!-- Badge de tipo -->
+                  <div class="absolute top-2 right-2 px-2 py-1 rounded text-xs font-bold backdrop-blur-sm"
+                    :class="listing.type === 'sale' ? 'bg-blue-600/90 text-white' : 'bg-yellow-500/90 text-white'">
                     {{ listing.type === 'sale' ? 'Venta' : 'Alquiler' }}
                   </div>
+                  
+                  <!-- Overlay sutil para mejorar legibilidad del badge -->
+                  <div class="absolute inset-0 bg-black/10"></div>
                 </div>
+                
                 <div class="p-4">
-                  <h3 class="font-semibold text-lg text-green-800 mb-2">
-                    {{ listing.title || (listing.tractor && (listing.tractor.brand + ' ' + listing.tractor.model)) || 'Tractor en venta' }}
+                  <h3 class="font-semibold text-lg text-green-800 mb-2 truncate">
+                    {{ getTractorName(listing) }}
                   </h3>
                   <div class="text-gray-600 mb-2 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -159,15 +212,27 @@
                   </div>
                   <div class="font-bold text-xl text-green-600 mb-3">
                     {{ formatCurrency(listing.price) }}
+                    <span v-if="listing.type === 'rental'" class="text-sm font-normal text-gray-500">/día</span>
                   </div>
-                  <span class="block w-full text-center bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition duration-200 cursor-pointer">
+                  <Link 
+                    :href="route('user.listings.show', listing.id)" 
+                    class="block w-full text-center bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition duration-200"
+                  >
                     Ver Detalle
-                  </span>
+                  </Link>
                 </div>
               </div>
               
               <div v-if="latestListings.length === 0" class="col-span-3 text-center py-8">
                 <p class="text-gray-500">No hay anuncios disponibles en este momento.</p>
+                <div v-if="isAuthenticated" class="mt-4">
+                  <Link 
+                    :href="route('user.listings.create')" 
+                    class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 transition duration-200"
+                  >
+                    Crear Primer Anuncio
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -212,18 +277,30 @@
           <!-- CTA Section -->
           <div class="bg-green-600 overflow-hidden shadow-lg rounded-lg p-8 text-center">
             <h2 class="text-2xl md:text-3xl font-bold text-white mb-4">
-              ¿Listo para encontrar tu próxima máquina agrícola?
+              {{ isAuthenticated 
+                ? '¿Listo para gestionar tu maquinaria agrícola?' 
+                : '¿Listo para encontrar tu próxima máquina agrícola?' 
+              }}
             </h2>
             <p class="text-green-100 text-lg mb-6 max-w-3xl mx-auto">
-              Únete a miles de agricultores que ya están aprovechando nuestra plataforma para comprar, vender y alquilar maquinaria agrícola.
+              {{ isAuthenticated 
+                ? 'Accede a tu dashboard para gestionar tus anuncios, ver solicitudes y conectar con otros usuarios.' 
+                : 'Únete a miles de agricultores que ya están aprovechando nuestra plataforma para comprar, vender y alquilar maquinaria agrícola.' 
+              }}
             </p>
             <div class="flex flex-col sm:flex-row justify-center gap-4">
-              <Link :href="route('register')" class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-green-700 bg-white hover:bg-green-50 transition duration-200">
-                Regístrate Ahora
+              <Link 
+                :href="isAuthenticated ? route('dashboard') : route('register')" 
+                class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-green-700 bg-white hover:bg-green-50 transition duration-200"
+              >
+                {{ isAuthenticated ? 'Ir al Dashboard' : 'Regístrate Ahora' }}
               </Link>
-              <span class="inline-flex items-center justify-center px-6 py-3 border border-white rounded-md shadow-sm text-base font-medium text-white hover:bg-green-700 transition duration-200 cursor-pointer">
-                Explorar Anuncios
-              </span>
+              <Link 
+                :href="route('user.listings.index')" 
+                class="inline-flex items-center justify-center px-6 py-3 border border-white rounded-md shadow-sm text-base font-medium text-white hover:bg-green-700 transition duration-200"
+              >
+                {{ isAuthenticated ? 'Ver Mis Anuncios' : 'Explorar Anuncios' }}
+              </Link>
             </div>
           </div>
         </div>
@@ -233,7 +310,7 @@
 </template>
 
 <script lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 
 const component = {
@@ -247,11 +324,40 @@ const component = {
       default: () => [],
     },
   },
+  computed: {
+    isAuthenticated() {
+      const page = usePage();
+      return !!(page.props.auth && page.props.auth.user);
+    }
+  },
   methods: {
     formatCurrency(value) {
       if (!value) return '---';
       return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
     },
+    
+    getTractorName(listing) {
+      if (!listing) return 'Tractor';
+      if (!listing.tractor) return 'Tractor';
+      
+      const brand = listing.tractor.brand || '';
+      const model = listing.tractor.model || '';
+      
+      if (brand && model) {
+        return `${brand} ${model}`;
+      } else if (brand) {
+        return brand;
+      } else if (model) {
+        return model;
+      }
+      
+      return 'Tractor';
+    },
+    
+    handleImageError(event) {
+      // Oculta la imagen rota y muestra el placeholder
+      event.target.style.display = 'none';
+    }
   }
 };
 
@@ -285,5 +391,12 @@ export default component;
 .hover\:bg-green-50:hover {
     background-color: rgba(240, 253, 244, 0.9);
     transition: background-color 0.2s ease-in-out;
+}
+
+/* Line clamp utility for description */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

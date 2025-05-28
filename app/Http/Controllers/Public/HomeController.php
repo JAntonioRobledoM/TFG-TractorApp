@@ -30,8 +30,14 @@ class HomeController extends Controller
                     'price' => $listing->price,
                     'location' => $listing->location,
                     'tractor' => $listing->tractor ? [
+                        'id' => $listing->tractor->id,
                         'brand' => $listing->tractor->brand,
                         'model' => $listing->tractor->model,
+                        'year' => $listing->tractor->year,
+                        'horsepower' => $listing->tractor->horsepower,
+                        // ¡ESTO ES LO QUE FALTABA! 
+                        'image' => $listing->tractor->image,
+                        'image_url' => $listing->tractor->image_url, // Este es el accessor que tienes en el modelo
                     ] : null,
                     'apero' => $listing->apero ? [
                         'name' => $listing->apero->name,
