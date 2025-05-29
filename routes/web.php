@@ -130,9 +130,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Rutas para PayPal
     Route::prefix('paypal')->name('paypal.')->middleware('auth')->group(function () {
+        // Obtener configuración de PayPal (client ID, etc.)
         Route::get('config', [App\Http\Controllers\PayPalController::class, 'getConfig'])->name('config');
+
+        // Registrar un pago (sin procesarlo, solo guardar la información)
         Route::post('payments', [App\Http\Controllers\PayPalController::class, 'storePayment'])->name('store');
+
+        // Obtener información de un pago por ID de solicitud
         Route::get('payments/request/{requestId}', [App\Http\Controllers\PayPalController::class, 'getPaymentForRequest'])->name('request.payment');
+
+        // Obtener información del vendedor para realizar un pago directo P2P
+        Route::get('seller-info/{requestId}', [App\Http\Controllers\PayPalController::class, 'getSellerPaymentInfo'])->name('seller.info');
     });
 });
 
