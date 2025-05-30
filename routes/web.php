@@ -46,6 +46,18 @@ Route::get('listings/rentals', [AdminListingController::class, 'rentals'])->name
 // Dashboard para usuarios normales (accesible a todos los usuarios autenticados)
 Route::middleware(['auth', 'verified'])->group(function () {
 
+    // Ver perfil
+    Route::get('/profile', [ProfileController::class, 'show'])->name('user.profile.show');
+
+    // Editar perfil
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('user.profile.edit');
+
+    // Actualizar perfil
+    Route::put('/profile', [ProfileController::class, 'update'])->name('user.profile.update');
+
+    // Eliminar foto de perfil
+    Route::delete('/profile/photo', [ProfileController::class, 'deleteProfilePhoto'])->name('user.profile.delete-photo');
+
     // Dashboard para usuarios normales
     Route::get('user/dashboard', [DashboardController::class, 'index'])->name('user.dashboard');
 
@@ -219,3 +231,4 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+require __DIR__ . '/profile.php';
